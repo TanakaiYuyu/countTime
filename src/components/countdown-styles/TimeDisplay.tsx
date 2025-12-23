@@ -13,7 +13,8 @@
  */
 
 import { useMemo } from 'react';
-// @ts-expect-error - package doesn't have built dist, importing from source
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - package doesn't have built dist, importing from source
 import { Display } from 'react-7-segment-display/src/index';
 import Colon from './Colon';
 
