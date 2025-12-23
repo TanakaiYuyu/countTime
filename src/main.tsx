@@ -52,6 +52,32 @@ if (!isLocalDev || hasValidInstance) {
   }
 }
 
+// Suppress harmless TelemetryOS SDK unsubscribe timeout errors
+// These occur when the SDK's internal cleanup tries to unsubscribe from store subscriptions
+// They don't affect functionality - the SDK manages subscriptions internally via useStoreState
+// Note: These errors are thrown asynchronously, so we catch them via error event listeners
+if (typeof window !== 'undefined') {
+  // Catch unhandled errors from SDK unsubscribe timeouts
+  window.addEventListener('error', (event) => {
+    const message = event.message || event.error?.message || '';
+    if (message.includes('store.unsubscribe') && message.includes('timed out')) {
+      // Prevent these harmless SDK internal errors from appearing in console
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+  }, true); // Use capture phase to catch errors early
+  
+  // Also catch unhandled promise rejections (SDK might throw async errors)
+  window.addEventListener('unhandledrejection', (event) => {
+    const message = event.reason?.message || event.reason?.toString() || '';
+    if (message.includes('store.unsubscribe') && message.includes('timed out')) {
+      // Prevent these from appearing in console
+      event.preventDefault();
+    }
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

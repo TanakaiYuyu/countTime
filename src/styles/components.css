@@ -855,3 +855,36 @@ textarea.input:focus {
 /* ===================
    FLEX UTILITIES
    =================== */
+
+/* ===================
+   DIGIT COMPONENT STYLES
+   =================== */
+
+/* Remove shadows from 7-segment display digits */
+.digit-container svg,
+.digit-container svg * {
+  filter: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  drop-shadow: none !important;
+}
+
+/* Target any nested elements in digit components */
+.digit-container * {
+  filter: none !important;
+}
+
+/* ===================
+   ANIMATIONS
+   =================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

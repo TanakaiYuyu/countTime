@@ -20,12 +20,13 @@ export default function MessagingCard() {
             <div
               className="rich-text-editor"
               style={{
-                border: 'var(--border-width) solid var(--color-border)',
+                borderWidth: 'var(--border-width)',
+                borderStyle: 'solid',
+                borderColor: focusedField === 'title' ? 'var(--color-accent)' : 'var(--color-border)',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--color-surface)',
                 transition: 'all var(--transition-base)',
                 ...(focusedField === 'title' && {
-                  borderColor: 'var(--color-accent)',
                   boxShadow: '0 0 0 0.125rem rgba(248, 179, 52, 0.1)',
                 }),
               }}
@@ -84,12 +85,13 @@ export default function MessagingCard() {
             <div
               className="rich-text-editor"
               style={{
-                border: 'var(--border-width) solid var(--color-border)',
+                borderWidth: 'var(--border-width)',
+                borderStyle: 'solid',
+                borderColor: focusedField === 'cta' ? 'var(--color-accent)' : 'var(--color-border)',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--color-surface)',
                 transition: 'all var(--transition-base)',
                 ...(focusedField === 'cta' && {
-                  borderColor: 'var(--color-accent)',
                   boxShadow: '0 0 0 0.125rem rgba(248, 179, 52, 0.1)',
                 }),
               }}

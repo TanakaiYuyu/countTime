@@ -12,7 +12,7 @@
  * - Color changes randomly every 2 seconds
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 // @ts-ignore - package doesn't have built dist, importing from source
 import { Display } from 'react-7-segment-display/src/index';
 import Colon from './Colon';
@@ -28,6 +28,20 @@ interface TimeDisplayProps {
   height?: number;
   /** Scale factor for responsive sizing */
   scaleFactor?: number;
+  /** Visible time units configuration */
+  visibleUnits?: {
+    days: boolean;
+    hours: boolean;
+    minutes: boolean;
+    seconds: boolean;
+  };
+  /** Unit labels configuration */
+  unitLabels?: {
+    days: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
 }
 
 export default function TimeDisplay({
@@ -35,9 +49,11 @@ export default function TimeDisplay({
   color = '#00ff9c',
   backgroundColor = '#000000',
   scaleFactor = 1.0,
+  visibleUnits = { days: true, hours: true, minutes: true, seconds: true },
+  unitLabels = { days: 'DAYS', hours: 'HOURS', minutes: 'MINUTES', seconds: 'SECONDS' },
 }: TimeDisplayProps) {
-  // State to track current display color (changes randomly every 2-3 seconds)
-  const [currentColor, setCurrentColor] = useState(color);
+  // Use the provided color directly (no random color changes)
+  const currentColor = color;
   
   // Get current day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
   const currentDayIndex = new Date().getDay();
@@ -81,59 +97,29 @@ export default function TimeDisplay({
     };
   }, [scaleFactor]);
 
-  // Generate a random color (bright, vibrant colors for LED display)
-  const generateRandomColor = () => {
-    const colors = [
-      '#00ff9c', // Neon green (default)
-      '#00ffff', // Cyan
-      '#ff00ff', // Magenta
-      '#ffff00', // Yellow
-      '#ff0080', // Pink
-      '#0080ff', // Blue
-      '#80ff00', // Lime
-      '#ff8000', // Orange
-      '#8000ff', // Purple
-      '#ff4080', // Rose
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
-  // Change color randomly every 2-3 seconds
-  useEffect(() => {
-    // Set initial color
-    setCurrentColor(color);
-
-    // Change color every 2-3 seconds (random interval)
-    const changeColor = () => {
-      setCurrentColor(generateRandomColor());
-      const nextInterval = 2000 + Math.random() * 1000; // 2000-3000ms
-      setTimeout(changeColor, nextInterval);
-    };
-
-    const timeoutId = setTimeout(changeColor, 2000 + Math.random() * 1000);
-
-    // Cleanup timeout on unmount
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [color]);
 
   // Convert remaining milliseconds to total seconds
   const totalSeconds = Math.floor(remainingMs / 1000);
   
-  // Calculate hours, minutes, and seconds
-  const hours = Math.floor(totalSeconds / 3600);
+  // Calculate days, hours, minutes, and seconds
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  // Display mode switching logic:
-  // - If remaining time >= 1 hour (3600 seconds), display HH:MM
-  // - Otherwise, display MM:SS
-  const showHours = totalSeconds >= 3600;
+  // Display mode switching logic based on visible units and remaining time:
+  // - If days are visible and > 0, or hours are visible and >= 1 hour, show HH:MM
+  // - Otherwise, show MM:SS
+  // Note: TimeDisplay uses a simplified display format (HH:MM or MM:SS),
+  // so visibleUnits is used to determine display mode, but unitLabels is available
+  // for consistency with other display components
+  const showHours = (visibleUnits.days && days > 0) || (visibleUnits.hours && totalSeconds >= 3600);
+  void unitLabels; // Suppress unused variable warning - available for consistency but not used in simplified display
 
   // Format values for display (always 2 digits)
+  // If showing hours, display hours and minutes; otherwise display minutes and seconds
   const leftValue = showHours 
-    ? String(hours).padStart(2, '0')      // HH in HH:MM mode
+    ? String(visibleUnits.days && days > 0 ? days : hours).padStart(2, '0')      // DD or HH in HH:MM mode
     : String(minutes).padStart(2, '0');   // MM in MM:SS mode
   
   const rightValue = showHours

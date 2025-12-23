@@ -3,6 +3,7 @@
  * Uses TelemetryOS SDK's useStoreState hook
  */
 
+import { useMemo } from 'react';
 import { useStoreState } from '@telemetryos/sdk/react';
 import { store } from '@telemetryos/sdk';
 import type { CountdownStore } from '../store/countdownStore';
@@ -13,7 +14,8 @@ import { defaultStore } from '../store/countdownStore';
  * All state is stored in SDK's local scope (shared between settings and render)
  */
 export function useCountdownStore() {
-  const instanceStore = store().instance;
+  // Memoize the store instance to prevent creating new subscriptions on every render
+  const instanceStore = useMemo(() => store().instance, []);
 
   // Target Event
   const [, targetDateTime, setTargetDateTime] = useStoreState<string | null>(
@@ -109,6 +111,13 @@ export function useCountdownStore() {
     'backgroundOpacity',
     defaultStore.backgroundOpacity
   );
+
+  // Note: We do NOT unsubscribe on component unmount because:
+  // 1. The TelemetryOS SDK store persists data across component mounts/unmounts
+  // 2. Multiple components (SettingsPage, RenderPage) share the same store instance
+  // 3. Unsubscribing would cause data loss when navigating between pages
+  // 4. The SDK manages subscription lifecycle internally via useStoreState
+  // The store instance and subscriptions persist for the lifetime of the application instance
 
   return {
     // Target Event
