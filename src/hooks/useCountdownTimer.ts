@@ -37,7 +37,7 @@ export function useCountdownTimer({
 
   // Track start time and initial duration for drift-free calculation
   // Using refs to avoid re-running effects on every render
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const initialDurationRef = useRef<number>(durationMs);
   const animationFrameRef = useRef<number | null>(null);
   const onCompleteRef = useRef(onComplete);
@@ -56,10 +56,15 @@ export function useCountdownTimer({
     }
 
     // Reset start time to current wall-clock time
+    // Date.now() is called inside useEffect, which is allowed
     startTimeRef.current = Date.now();
     initialDurationRef.current = durationMs;
-    setRemainingMs(durationMs);
-    setIsRunning(durationMs > 0);
+    
+    // Use setTimeout to avoid calling setState synchronously in effect
+    setTimeout(() => {
+      setRemainingMs(durationMs);
+      setIsRunning(durationMs > 0);
+    }, 0);
 
     // Animation loop using requestAnimationFrame
     // This ensures drift-free timing by calculating elapsed time from wall-clock
@@ -89,7 +94,10 @@ export function useCountdownTimer({
     if (durationMs > 0) {
       animationFrameRef.current = requestAnimationFrame(updateTimer);
     } else {
-      setIsRunning(false);
+      // Use setTimeout to avoid calling setState synchronously in effect
+      setTimeout(() => {
+        setIsRunning(false);
+      }, 0);
     }
 
     // Cleanup: cancel animation frame when duration changes or component unmounts

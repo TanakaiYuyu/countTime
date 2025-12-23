@@ -5,7 +5,7 @@
  * Uses @leenguyen/react-flip-clock-countdown for the flip animation effect.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import FlipClockCountdown from '@leenguyen/react-flip-clock-countdown';
 import '@leenguyen/react-flip-clock-countdown/dist/index.css';
 
@@ -40,8 +40,10 @@ export default function FlipClockDisplay({
   visibleUnits = { days: true, hours: true, minutes: true, seconds: true },
   unitLabels = { days: 'DAYS', hours: 'HOURS', minutes: 'MINUTES', seconds: 'SECONDS' },
 }: FlipClockDisplayProps) {
-  const targetTime = useMemo(() => {
-    return Date.now() + remainingMs;
+  const [targetTime, setTargetTime] = useState(() => Date.now() + remainingMs);
+  
+  useEffect(() => {
+    setTargetTime(Date.now() + remainingMs);
   }, [remainingMs]);
 
   // Build labels array based on visibleUnits configuration

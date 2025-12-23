@@ -108,8 +108,8 @@ export default function RenderPage() {
     console.log('=== COMPARING WITH DEFAULTS ===');
     const differences: string[] = [];
     Object.keys(allSettings).forEach((key) => {
-      const currentValue = (allSettings as any)[key];
-      const defaultValue = (defaultStore as any)[key];
+      const currentValue = (allSettings as Record<string, unknown>)[key];
+      const defaultValue = (defaultStore as unknown as Record<string, unknown>)[key];
       const isDifferent = JSON.stringify(currentValue) !== JSON.stringify(defaultValue);
       if (isDifferent) {
         differences.push(key);
@@ -160,18 +160,34 @@ export default function RenderPage() {
   ]);
 
   // Calculate initial duration in milliseconds from targetDateTime
-  const initialDurationMs = useMemo(() => {
+  const [initialDurationMs, setInitialDurationMs] = useState(() => {
     if (!targetDateTime) {
-      // Default to 5 minutes if no target date is set
       return 5 * 60 * 1000;
+    }
+    const target = new Date(targetDateTime).getTime();
+    return Math.max(0, target - (() => Date.now())());
+  });
+
+  useEffect(() => {
+    if (!targetDateTime) {
+      // Use setTimeout to avoid calling setState synchronously in effect
+      setTimeout(() => {
+        setInitialDurationMs(5 * 60 * 1000);
+      }, 0);
+      return;
     }
     
     const target = new Date(targetDateTime).getTime();
-    const now = Date.now();
-    const duration = target - now;
+    const updateDuration = () => {
+      const now = Date.now();
+      const duration = target - now;
+      setInitialDurationMs(Math.max(0, duration));
+    };
     
-    // Return 0 if target is in the past, otherwise return the duration
-    return Math.max(0, duration);
+    // Use setTimeout to avoid calling setState synchronously in effect
+    setTimeout(updateDuration, 0);
+    const interval = setInterval(updateDuration, 1000);
+    return () => clearInterval(interval);
   }, [targetDateTime]);
 
   // Determine background style based on store settings

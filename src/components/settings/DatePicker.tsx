@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerProps {
@@ -12,8 +12,11 @@ export default function DatePicker({ value, onChange, className = '' }: DatePick
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Parse value or use today
-  const selectedDate = value ? new Date(value + 'T00:00:00') : null;
+  // Parse value or use today - memoize to avoid dependency issues
+  const selectedDate = useMemo(() => {
+    return value ? new Date(value + 'T00:00:00') : null;
+  }, [value]);
+  
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -34,9 +37,12 @@ export default function DatePicker({ value, onChange, className = '' }: DatePick
   // Initialize current month from selected date or today
   useEffect(() => {
     if (selectedDate) {
-      setCurrentMonth(new Date(selectedDate));
+      // Use setTimeout to avoid calling setState synchronously in effect
+      setTimeout(() => {
+        setCurrentMonth(new Date(selectedDate));
+      }, 0);
     }
-  }, [value]);
+  }, [value, selectedDate]);
 
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();

@@ -13,8 +13,6 @@ export default function ThemeBackgroundCard() {
     setBackgroundType,
     backgroundColor,
     setBackgroundColor,
-    backgroundMediaId,
-    setBackgroundMediaId,
     backgroundOpacity,
     setBackgroundOpacity,
   } = useCountdownStore();

@@ -7,7 +7,6 @@ export default function CompletionContentCard() {
     completionRichText,
     setCompletionRichText,
     completionMediaId,
-    setCompletionMediaId,
   } = useCountdownStore();
 
   const types = [

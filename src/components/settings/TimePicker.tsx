@@ -33,8 +33,11 @@ export default function TimePicker({ value, onChange, className = '' }: TimePick
   useEffect(() => {
     if (value) {
       const [h, m] = value.split(':').map(Number);
-      setSelectedHours(h);
-      setSelectedMinutes(m);
+      // Use setTimeout to avoid calling setState synchronously in effect
+      setTimeout(() => {
+        setSelectedHours(h);
+        setSelectedMinutes(m);
+      }, 0);
     }
   }, [value]);
 

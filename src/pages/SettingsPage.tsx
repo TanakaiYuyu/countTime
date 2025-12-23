@@ -245,7 +245,7 @@ export default function SettingsPage() {
 
       // Explicitly write all current settings to the store
       // Force write each value to ensure they're persisted
-      const savedSettings: Record<string, any> = {};
+      const savedSettings: Record<string, unknown> = {};
       
       console.log('=== WRITING VALUES TO STORE ===');
       
@@ -322,10 +322,10 @@ export default function SettingsPage() {
 
       // Compare saved values with defaults to see if anything changed
       console.log('=== COMPARING SAVED VALUES WITH DEFAULTS ===');
-      const changes: Record<string, { saved: any; default: any; changed: boolean }> = {};
+      const changes: Record<string, { saved: unknown; default: unknown; changed: boolean }> = {};
       Object.keys(savedSettings).forEach((key) => {
         const savedValue = savedSettings[key];
-        const defaultValue = (defaultStore as any)[key];
+        const defaultValue = (defaultStore as unknown as Record<string, unknown>)[key];
         const changed = JSON.stringify(savedValue) !== JSON.stringify(defaultValue);
         changes[key] = { saved: savedValue, default: defaultValue, changed };
         if (changed) {

@@ -19,7 +19,7 @@ function getAllTimezones(): string[] {
   if (typeof Intl !== 'undefined' && 'supportedValuesOf' in Intl) {
     try {
       return Intl.supportedValuesOf('timeZone');
-    } catch (e) {
+    } catch {
       // Fallback if not supported
     }
   }

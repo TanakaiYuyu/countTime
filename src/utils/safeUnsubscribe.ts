@@ -20,7 +20,7 @@ interface SafeUnsubscribeOptions {
  * @returns Promise<boolean> - True if unsubscribe succeeded, false otherwise
  */
 export async function safeUnsubscribe(
-  store: any,
+  store: { unsubscribe?: (name: string, opts?: { timeout?: number }) => Promise<void>; hasSubscription?: (name: string) => boolean } | null | undefined,
   subscriptionName: string,
   options: SafeUnsubscribeOptions = {}
 ): Promise<boolean> {
