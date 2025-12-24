@@ -41,7 +41,7 @@ export default function TimeUnitsCard() {
       <SettingsField>
         <SettingsLabel>Visible Units</SettingsLabel>
         <SettingsCheckboxFrame>
-          <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
+          <div className="grid gap-2 grid-cols-2 w-full">
             {units.map((unit) => (
               <label
                 key={unit.key}

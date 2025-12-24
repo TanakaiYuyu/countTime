@@ -104,12 +104,16 @@ export default function DatePicker({ value, onChange, className = '' }: DatePick
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div ref={containerRef} className={`date-picker-container ${className}`}>
+    <div
+      ref={containerRef}
+      className={`date-picker-container ${className}`}
+      style={{ position: 'relative' }}
+    >
       <input
         type="text"
         readOnly
         value={selectedDate ? formatDisplayDate(selectedDate) : ''}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(true)}
         placeholder="Select a date"
         className="input input--date h-full"
         style={{ cursor: 'pointer' }}
@@ -120,9 +124,8 @@ export default function DatePicker({ value, onChange, className = '' }: DatePick
           className="date-picker-popup"
           style={{
             position: 'absolute',
-            top: '100%',
+            top: 'calc(100% + 4px)',
             left: 0,
-            marginTop: '0.25rem',
             zIndex: 1000,
             backgroundColor: 'var(--color-surface)',
             border: 'var(--border-width) solid var(--color-border)',

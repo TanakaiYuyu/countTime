@@ -72,12 +72,16 @@ export default function TimePicker({ value, onChange, className = '' }: TimePick
   const minuteOptions = Array.from({ length: 12 }, (_, i) => i * 5);
 
   return (
-    <div ref={containerRef} className={`time-picker-container ${className}`}>
+    <div
+      ref={containerRef}
+      className={`time-picker-container ${className}`}
+      style={{ position: 'relative' }}
+    >
       <input
         type="text"
         readOnly
         value={value ? formatDisplayTime(selectedHours, selectedMinutes) : ''}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(true)}
         placeholder="Select a time"
         className="input input--time h-full"
         style={{ cursor: 'pointer' }}
@@ -88,9 +92,8 @@ export default function TimePicker({ value, onChange, className = '' }: TimePick
           className="time-picker-popup"
           style={{
             position: 'absolute',
-            top: '100%',
+            top: 'calc(100% + 4px)',
             left: 0,
-            marginTop: '0.25rem',
             zIndex: 1000,
             backgroundColor: 'var(--color-surface)',
             border: 'var(--border-width) solid var(--color-border)',

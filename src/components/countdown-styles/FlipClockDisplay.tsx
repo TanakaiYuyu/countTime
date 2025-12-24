@@ -1,10 +1,3 @@
-/**
- * FlipClockDisplay Component
- * 
- * Animated flip-style card display for countdown timer.
- * Uses @leenguyen/react-flip-clock-countdown for the flip animation effect.
- */
-
 import { useMemo, useState, useEffect } from 'react';
 import FlipClockCountdown from '@leenguyen/react-flip-clock-countdown';
 import '@leenguyen/react-flip-clock-countdown/dist/index.css';
@@ -16,14 +9,12 @@ interface FlipClockDisplayProps {
   backgroundColor?: string;
   height?: number;
   scaleFactor?: number;
-  /** Visible time units configuration */
   visibleUnits?: {
     days: boolean;
     hours: boolean;
     minutes: boolean;
     seconds: boolean;
   };
-  /** Unit labels configuration */
   unitLabels?: {
     days: string;
     hours: string;
@@ -46,15 +37,12 @@ export default function FlipClockDisplay({
     setTargetTime(Date.now() + remainingMs);
   }, [remainingMs]);
 
-  // Build labels array based on visibleUnits configuration
-  // FlipClockCountdown requires exactly 4 labels, so we always provide 4
   const labels = useMemo(() => {
     const labelArray: string[] = [];
     if (visibleUnits.days) labelArray.push(unitLabels.days);
     if (visibleUnits.hours) labelArray.push(unitLabels.hours);
     if (visibleUnits.minutes) labelArray.push(unitLabels.minutes);
     if (visibleUnits.seconds) labelArray.push(unitLabels.seconds);
-    // Ensure we have exactly 4 labels (pad with empty strings if needed)
     while (labelArray.length < 4) {
       labelArray.push('');
     }
@@ -77,22 +65,23 @@ export default function FlipClockDisplay({
           fontSize: labelFontSize,
           fontWeight: 500,
           textTransform: 'uppercase',
-          color: color,
+          color: '#FFFFFF',
         }}
         digitBlockStyle={{
           width: digitBlockWidth,
           height: digitBlockHeight,
           fontSize: digitBlockFontSize,
-          backgroundColor: backgroundColor,
-          color: color,
+          // Card takes the accent color; digits invert to white for contrast
+          backgroundColor: color || backgroundColor,
+          color: '#FFFFFF',
           borderRadius: '0.5rem',
         }}
         dividerStyle={{
-          color: color,
+          color: '#FFFFFF',
           height: '1px',
         }}
         separatorStyle={{
-          color: color,
+          color: '#FFFFFF',
           size: `${Math.round(6 * 3 * scaleFactor)}px`,
         }}
         duration={0.5}

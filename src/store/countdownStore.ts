@@ -55,7 +55,7 @@ export interface CountdownStore {
 export const defaultStore: CountdownStore = {
   targetDateTime: null,
   timezone: 'device',
-  displayStyle: 'flip',
+  displayStyle: 'blocks',
   visibleUnits: {
     days: true,
     hours: true,
