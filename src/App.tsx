@@ -9,7 +9,7 @@ function App() {
       <Routes>
         <Route path="/render" element={<RenderPage />} />
         <Route
-          path="*"
+          path="/settings"
           element={
             <>
               <SettingsPage />
