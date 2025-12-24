@@ -13,4 +13,10 @@ export default defineConfig({
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+  },
+  ssr: {
+    noExternal: ['@telemetryos/sdk', '@telemetryos/sdk/react', '@telemetryos/root-sdk'],
+  },
 })
