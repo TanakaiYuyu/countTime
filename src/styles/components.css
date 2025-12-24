@@ -118,6 +118,11 @@
   padding: 0;
 }
 
+
+.settings__input-frame>* {
+  padding: 0;
+}
+
 /* ===================
    CARD ANIMATIONS
    =================== */
