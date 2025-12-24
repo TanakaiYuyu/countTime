@@ -359,7 +359,7 @@ export default function RenderPage() {
     <div className="render-page-container" style={{ position: 'relative', overflow: 'hidden', ...getBackgroundStyle() }}>
       {renderBackgroundMedia()}
       <div className="render-page-content" style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
           <div style={{ width: '100%', maxWidth: '1200px' }}>
             <div style={{ marginBottom: '1.25rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1.6 * scaleFactor}rem`, textAlign: 'center' }}>
               {titleRichText}
