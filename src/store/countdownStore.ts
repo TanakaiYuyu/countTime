@@ -92,7 +92,11 @@ export const defaultStore: CountdownStore = {
 
 type StoreHandler<T> = (value: T | undefined) => void;
 
-class InMemoryStoreSlice {
+class InMemoryStoreSlice implements StoreSlice {
+  _kind = 'memory';
+  _namespace = 'memory';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _client: any = null;
   private data = new Map<string, unknown>();
   private listeners = new Map<string, Set<StoreHandler<unknown>>>();
 
@@ -110,7 +114,6 @@ class InMemoryStoreSlice {
     const bucket = this.listeners.get(key) ?? new Set();
     bucket.add(handler as StoreHandler<unknown>);
     this.listeners.set(key, bucket);
-    // Emit current value immediately for parity with SDK behavior
     handler((await this.get<T>(key)) as T | undefined);
     return true;
   }
@@ -143,18 +146,17 @@ class InMemoryStoreSlice {
       try {
         handler(value);
       } catch (err) {
-        // Swallow listener errors to avoid breaking others
         console.warn('[countdownStore] In-memory listener error', err);
       }
     });
   }
 }
 
-let countdownStoreSlice: StoreSlice | InMemoryStoreSlice | null = null;
-let initializationPromise: Promise<StoreSlice | InMemoryStoreSlice> | null = null;
+let countdownStoreSlice: StoreSlice | null = null;
+let initializationPromise: Promise<StoreSlice> | null = null;
 let resolvedScope: 'device' | 'instance' | 'memory' | null = null;
 
-const resolveStoreSlice = async (): Promise<StoreSlice | InMemoryStoreSlice> => {
+const resolveStoreSlice = async (): Promise<StoreSlice> => {
   if (countdownStoreSlice) return countdownStoreSlice;
 
   const sdkStore = store();
@@ -209,7 +211,7 @@ const applyDefaultsOnce = async (slice: StoreSlice | InMemoryStoreSlice) => {
  * Initialize the TelemetryOS device store exactly once and hydrate defaults
  * for unset keys. Safe to call multiple times.
  */
-export const initializeCountdownStore = (): Promise<StoreSlice | InMemoryStoreSlice> => {
+export const initializeCountdownStore = (): Promise<StoreSlice> => {
   if (initializationPromise) {
     return initializationPromise;
   }
@@ -230,7 +232,7 @@ export const initializeCountdownStore = (): Promise<StoreSlice | InMemoryStoreSl
  * Return the singleton device store slice. This does not recreate the store
  * and kicks off default hydration if it has not already run.
  */
-export const getCountdownStore = (): StoreSlice | InMemoryStoreSlice => {
+export const getCountdownStore = (): StoreSlice => {
   if (!countdownStoreSlice) {
     // Start async resolution but return instance scope as a safe fallback immediately.
     void resolveStoreSlice()
