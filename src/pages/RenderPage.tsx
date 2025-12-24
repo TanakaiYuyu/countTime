@@ -150,12 +150,15 @@ export default function RenderPage() {
     completionDurationMs,
   ]);
 
+  // Calculate duration - completionDurationMs is already calculated in settings
   const durationMs = useMemo(() => {
     if (typeof completionDurationMs === 'number') {
       return Math.max(0, completionDurationMs);
     }
+    // Fallback: calculate from targetDateTime if completionDurationMs isn't set
     if (targetDateTime) {
       const target = new Date(targetDateTime).getTime();
+      // eslint-disable-next-line react-hooks/purity -- Intentional: countdown timer needs current time
       return Math.max(0, target - Date.now());
     }
     return defaultStore.completionDurationMs;
