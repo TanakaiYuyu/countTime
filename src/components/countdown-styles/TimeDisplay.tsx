@@ -1,25 +1,8 @@
-/**
- * TimeDisplay Component
- * 
- * Displays time using react-7-segment-display with automatic mode switching:
- * - HH:MM mode when remaining time >= 1 hour
- * - MM:SS mode when remaining time < 1 hour
- * 
- * Display Logic:
- * - Always renders exactly 4 digits + colon (2 digits : 2 digits)
- * - Mode switches automatically based on remaining time
- * - No layout shift when switching modes (same structure)
- * - Color changes randomly every 2 seconds
- */
-
 import { useMemo } from 'react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - package doesn't have built dist, importing from source
 import { Display } from 'react-7-segment-display/src/index';
 import Colon from './Colon';
 
 interface TimeDisplayProps {
-  /** Remaining time in milliseconds */
   remainingMs: number;
   /** Color for active segments */
   color?: string;

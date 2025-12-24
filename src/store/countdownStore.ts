@@ -29,6 +29,10 @@ export interface CountdownStore {
   titleRichText: string;
   ctaRichText: string;
   
+  // Completion time (operator provided)
+  completionTimeMode: 'calculated' | 'provided' | 'preview';
+  completionTimeValue: string | null;
+
   // Completion
   completionType: 'richText' | 'media' | 'none';
   completionRichText: string;
@@ -66,6 +70,8 @@ export const defaultStore: CountdownStore = {
   },
   titleRichText: "New Year's Eve Countdown",
   ctaRichText: 'Join us for the celebration!',
+  completionTimeMode: 'provided',
+  completionTimeValue: null,
   completionType: 'richText',
   completionRichText: 'The countdown has ended!',
   completionMediaId: null,

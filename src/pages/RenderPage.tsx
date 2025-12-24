@@ -1,41 +1,25 @@
-import { useUiScaleToSetRem } from '@telemetryos/sdk/react';
+import { media } from '@telemetryos/sdk';
+import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
 import { useMemo, useEffect, useState } from 'react';
 import { useCountdownStore } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import CountTimer from '../components/countdown-styles/CountTimer';
 
 export default function RenderPage() {
-  // Track viewport dimensions for responsive scaling
   const [viewportSize, setViewportSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   });
 
-  // Calculate scale factor based on resolution
-  // Base resolution: 1920x1080 (scale = 1.0)
-  // Scale down for smaller screens, scale up for larger screens
-  const scaleFactor = useMemo(() => {
-    const baseWidth = 1920;
-    const baseHeight = 1080;
-    
-    const currentWidth = viewportSize.width;
-    const currentHeight = viewportSize.height;
-    
-    // Calculate scale based on both width and height, prioritizing the smaller dimension
-    // to ensure content fits on screen
-    const widthScale = currentWidth / baseWidth;
-    const heightScale = currentHeight / baseHeight;
-    
-    // Use the smaller scale to ensure everything fits
-    let scale = Math.min(widthScale, heightScale);
-    
-    // Clamp scale between 0.5 and 2.0 for reasonable bounds
-    scale = Math.max(0.5, Math.min(2.0, scale));
-    
-    return scale;
-  }, [viewportSize.width, viewportSize.height]);
+  const uiAspectRatio = useUiAspectRatio();
 
-  // Update viewport size on resize
+  const scaleFactor = useMemo(() => {
+    const designHeight = 900;
+    const currentHeight = viewportSize.height;
+    const scale = currentHeight / designHeight;
+    return Math.max(0.85, Math.min(1.8, scale));
+  }, [viewportSize.height]);
+
   useEffect(() => {
     const handleResize = () => {
       setViewportSize({
@@ -43,20 +27,15 @@ export default function RenderPage() {
         height: window.innerHeight,
       });
     };
-
-    // Set initial size
     handleResize();
-
-    // Listen for resize events
     window.addEventListener('resize', handleResize);
-    
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
   useUiScaleToSetRem(scaleFactor);
+  useUiResponsiveFactors(scaleFactor, uiAspectRatio);
 
   // Get all settings from store - useStoreState automatically subscribes to changes
   // This ensures real-time updates when settings change in /settings
@@ -74,6 +53,8 @@ export default function RenderPage() {
     unitLabels,
     titleRichText,
     ctaRichText,
+    completionTimeMode,
+    completionTimeValue,
     completionType,
     completionRichText,
     completionMediaId,
@@ -92,6 +73,8 @@ export default function RenderPage() {
       unitLabels,
       titleRichText,
       ctaRichText,
+      completionTimeMode,
+      completionTimeValue,
       completionType,
       completionRichText,
       completionMediaId,
@@ -131,6 +114,8 @@ export default function RenderPage() {
     console.log('  unitLabels:', JSON.stringify(unitLabels, null, 2));
     console.log('  titleRichText:', titleRichText);
     console.log('  ctaRichText:', ctaRichText);
+    console.log('  completionTimeMode:', completionTimeMode);
+    console.log('  completionTimeValue:', completionTimeValue);
     console.log('  completionType:', completionType);
     console.log('  completionRichText:', completionRichText);
     console.log('  completionMediaId:', completionMediaId);
@@ -148,6 +133,8 @@ export default function RenderPage() {
     unitLabels,
     titleRichText,
     ctaRichText,
+    completionTimeMode,
+    completionTimeValue,
     completionType,
     completionRichText,
     completionMediaId,
@@ -159,38 +146,74 @@ export default function RenderPage() {
     backgroundOpacity,
   ]);
 
-  // Calculate initial duration in milliseconds from targetDateTime
-  const [initialDurationMs, setInitialDurationMs] = useState(() => {
-    if (!targetDateTime) {
-      return 5 * 60 * 1000;
-    }
+  const durationMs = useMemo(() => {
+    if (!targetDateTime) return 5 * 60 * 1000;
     const target = new Date(targetDateTime).getTime();
-    return Math.max(0, target - (() => Date.now())());
-  });
-
-  useEffect(() => {
-    if (!targetDateTime) {
-      // Use setTimeout to avoid calling setState synchronously in effect
-      setTimeout(() => {
-        setInitialDurationMs(5 * 60 * 1000);
-      }, 0);
-      return;
-    }
-    
-    const target = new Date(targetDateTime).getTime();
-    const updateDuration = () => {
-      const now = Date.now();
-      const duration = target - now;
-      setInitialDurationMs(Math.max(0, duration));
-    };
-    
-    // Use setTimeout to avoid calling setState synchronously in effect
-    setTimeout(updateDuration, 0);
-    const interval = setInterval(updateDuration, 1000);
-    return () => clearInterval(interval);
+    return Math.max(0, target - Date.now());
   }, [targetDateTime]);
 
-  // Determine background style based on store settings
+  const [backgroundMedia, setBackgroundMedia] = useState<{
+    url: string;
+    type: 'image' | 'video';
+  } | null>(null);
+
+  const [completionMedia, setCompletionMedia] = useState<{
+    url: string;
+    type: 'image' | 'video';
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!backgroundMediaId) {
+      setBackgroundMedia(null);
+      return;
+    }
+    media()
+      .getById(backgroundMediaId)
+      .then((item) => {
+        if (cancelled) return;
+        const url = item.publicUrls?.[0] || item.thumbnailUrl;
+        if (!url) {
+          setBackgroundMedia(null);
+          return;
+        }
+        const type = item.contentType.startsWith('video') ? 'video' : 'image';
+        setBackgroundMedia({ url, type });
+      })
+      .catch(() => {
+        if (!cancelled) setBackgroundMedia(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [backgroundMediaId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!completionMediaId) {
+      setCompletionMedia(null);
+      return;
+    }
+    media()
+      .getById(completionMediaId)
+      .then((item) => {
+        if (cancelled) return;
+        const url = item.publicUrls?.[0] || item.thumbnailUrl;
+        if (!url) {
+          setCompletionMedia(null);
+          return;
+        }
+        const type = item.contentType.startsWith('video') ? 'video' : 'image';
+        setCompletionMedia({ url, type });
+      })
+      .catch(() => {
+        if (!cancelled) setCompletionMedia(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [completionMediaId]);
+
   const getBackgroundStyle = () => {
     const bgType = backgroundType || defaultStore.backgroundType;
     const bgColor = backgroundColor || defaultStore.backgroundColor;
@@ -202,21 +225,17 @@ export default function RenderPage() {
         opacity: bgOpacity,
       };
     }
-    if (bgType === 'media') {
-      // Placeholder for media background
+    if (bgType === 'media' && backgroundMedia) {
       return {
-        backgroundColor: '#1a1d2e',
-        opacity: bgOpacity,
+        backgroundColor: 'transparent',
       };
     }
-    // Default theme background
     return {
       backgroundColor: 'hsl(210, 28%, 8%)',
       opacity: bgOpacity,
     };
   };
 
-  // Use primaryColor from store, fallback to default
   const ledColor = primaryColor || defaultStore.primaryColor;
   const displayBackgroundColor = getBackgroundStyle().backgroundColor || '#000000';
 
@@ -263,20 +282,27 @@ export default function RenderPage() {
     }
     
     if (compType === 'media' && completionMediaId) {
-      // Placeholder for media display
-      return (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-          }}
-        >
-          <p style={{ color: ledColor }}>Media ID: {completionMediaId}</p>
-        </div>
-      );
+      if (completionMedia?.type === 'video') {
+        return (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 10 }}
+            src={completionMedia.url}
+          />
+        );
+      }
+      if (completionMedia?.url) {
+        return (
+          <img
+            src={completionMedia.url}
+            alt="Completion media"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 10 }}
+          />
+        );
+      }
     }
     
     return null;
@@ -289,23 +315,64 @@ export default function RenderPage() {
   console.log('RenderPage - Using displayStyle:', currentDisplayStyle);
   console.log('RenderPage - About to render ONE CountTimer component');
 
+  const renderBackgroundMedia = () => {
+    if (backgroundType !== 'media' || !backgroundMedia) return null;
+    if (backgroundMedia.type === 'video') {
+      return (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          src={backgroundMedia.url}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: backgroundOpacity }}
+        />
+      );
+    }
+    return (
+      <img
+        src={backgroundMedia.url}
+        alt="Background"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: backgroundOpacity }}
+      />
+    );
+  };
+
+  const completionTimeLabel =
+    completionTimeMode === 'calculated'
+      ? targetDateTime || defaultStore.targetDateTime
+      : completionTimeValue || defaultStore.completionTimeValue || '';
+
   return (
-    <div className="render-page-container" style={getBackgroundStyle()}>
+    <div className="render-page-container" style={{ position: 'relative', overflow: 'hidden', ...getBackgroundStyle() }}>
+      {renderBackgroundMedia()}
       <div className="render-page-content" style={{ position: 'relative', width: '100%', height: '100%' }}>
-         {/* Countdown timer - Only render ONE timer based on displayStyle */}
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CountTimer
-            key={`countdown-${currentDisplayStyle}`}
-            durationMs={initialDurationMs}
-            color={ledColor}
-            backgroundColor={displayBackgroundColor}
-            height={180}
-            scaleFactor={scaleFactor}
-            onComplete={handleComplete}
-          />
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ width: '100%', maxWidth: '1200px' }}>
+            <div style={{ marginBottom: '1.25rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1.6 * scaleFactor}rem`, textAlign: 'center' }}>
+              {titleRichText}
+            </div>
+            <CountTimer
+              key={`countdown-${currentDisplayStyle}`}
+              durationMs={durationMs}
+              color={ledColor}
+              backgroundColor={displayBackgroundColor}
+              height={160 * scaleFactor}
+              scaleFactor={scaleFactor}
+              displayStyle={currentDisplayStyle}
+              visibleUnits={visibleUnits}
+              unitLabels={unitLabels}
+              onComplete={handleComplete}
+            />
+            <div style={{ marginTop: '1rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1.2 * scaleFactor}rem`, textAlign: 'center' }}>
+              {ctaRichText}
+            </div>
+            <div style={{ marginTop: '0.75rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1 * scaleFactor}rem`, textAlign: 'center' }}>
+              {completionTimeLabel ? `Completion Time: ${completionTimeLabel}` : null}
+            </div>
+          </div>
         </div>
 
-        {/* Completion content overlay */}
         {renderCompletionContent()}
       </div>
     </div>

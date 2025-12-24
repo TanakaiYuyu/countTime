@@ -1,3 +1,12 @@
+import {
+  SettingsBox,
+  SettingsCheckboxFrame,
+  SettingsCheckboxLabel,
+  SettingsField,
+  SettingsHeading,
+  SettingsInputFrame,
+  SettingsLabel,
+} from '@telemetryos/sdk/react';
 import { useCountdownStore } from '../../hooks/useCountdownStore';
 
 type UnitKey = 'days' | 'hours' | 'minutes' | 'seconds';
@@ -27,90 +36,51 @@ export default function TimeUnitsCard() {
   };
 
   return (
-    <div className="section">
-      <div className="card">
-        <div className="card__header">
-          <h2 className="card__title" style={{ fontSize: 'var(--font-size-lg)' }}>
-            Time Units
-          </h2>
-        </div>
-        <div className="p-4">
-          <div className="field">
-            <label className="field__label">Visible Units</label>
-            <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-4)',
-                flexWrap: 'wrap',
-                padding: 'var(--space-3)',
-                backgroundColor: 'var(--color-surface-raised)',
-                borderRadius: 'var(--radius-sm)',
-                border: 'var(--border-width) solid var(--color-border)',
-              }}
-            >
-              {units.map((unit) => (
-                <label
-                  key={unit.key}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    cursor: 'pointer',
-                    padding: 'var(--space-2)',
-                    borderRadius: 'var(--radius-sm)',
-                    transition: 'background-color var(--transition-base)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-surface)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={visibleUnits[unit.key]}
-                    onChange={() => handleUnitToggle(unit.key)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <span
-                    style={{
-                      color: 'var(--color-text)',
-                      fontSize: 'var(--font-size-sm)',
-                      fontWeight: visibleUnits[unit.key] ? 'var(--font-weight-medium)' : 'var(--font-weight-normal)',
-                    }}
-                  >
-                    {unit.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 'var(--space-4)',
-              marginTop: 'var(--space-6)',
-            }}
-          >
+    <SettingsBox>
+      <SettingsHeading>Time Units</SettingsHeading>
+      <SettingsField>
+        <SettingsLabel>Visible Units</SettingsLabel>
+        <SettingsCheckboxFrame>
+          <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
             {units.map((unit) => (
-              <div key={unit.key} className="field">
-                <label className="field__label">{unit.label} Label</label>
+              <label
+                key={unit.key}
+                className="flex items-center gap-2 rounded-sm px-2 py-1 transition-colors cursor-pointer"
+              >
                 <input
-                  type="text"
-                  className="input"
-                  value={unitLabels[unit.key]}
-                  onChange={(e) => handleLabelChange(unit.key, e.target.value)}
-                  placeholder={`e.g., ${unit.label.toUpperCase()}`}
+                  type="checkbox"
+                  checked={visibleUnits[unit.key]}
+                  onChange={() => handleUnitToggle(unit.key)}
+                  className="h-4 w-4 cursor-pointer"
                 />
-              </div>
+                <SettingsCheckboxLabel>{unit.label}</SettingsCheckboxLabel>
+              </label>
             ))}
           </div>
-        </div>
+        </SettingsCheckboxFrame>
+      </SettingsField>
+
+      <div className="grid gap-3 grid-cols-2">
+        {units.map((unit) => (
+          <SettingsField key={unit.key}>
+            <SettingsLabel>{unit.label} Label</SettingsLabel>
+            <SettingsInputFrame>
+              <input
+                type="text"
+                value={unitLabels[unit.key]}
+                onChange={(e) => handleLabelChange(unit.key, e.target.value)}
+                placeholder={`e.g., ${unit.label.toUpperCase()}`}
+                style={{
+                  border: 'var(--border-width) solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)'
+                }}
+                className="bg-transparent border px-3 py-3 text-base focus:outline-none"
+              />
+            </SettingsInputFrame>
+          </SettingsField>
+        ))}
       </div>
-    </div>
+    </SettingsBox>
   );
 }
 

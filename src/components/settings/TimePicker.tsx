@@ -72,14 +72,14 @@ export default function TimePicker({ value, onChange, className = '' }: TimePick
   const minuteOptions = Array.from({ length: 12 }, (_, i) => i * 5);
 
   return (
-    <div ref={containerRef} className={`time-picker-container ${className}`} style={{ position: 'relative' }}>
+    <div ref={containerRef} className={`time-picker-container ${className}`}>
       <input
         type="text"
         readOnly
         value={value ? formatDisplayTime(selectedHours, selectedMinutes) : ''}
         onClick={() => setIsOpen(!isOpen)}
         placeholder="Select a time"
-        className="input input--time"
+        className="input input--time h-full"
         style={{ cursor: 'pointer' }}
       />
       

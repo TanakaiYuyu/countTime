@@ -1,4 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  SettingsBox,
+  SettingsField,
+  SettingsHeading,
+  SettingsHint,
+  SettingsInputFrame,
+  SettingsLabel,
+} from '@telemetryos/sdk/react';
 import { useCountdownStore } from '../../hooks/useCountdownStore';
 import { getAllTimezoneOptions } from '../../utils/timezones';
 import DatePicker from './DatePicker';
@@ -6,120 +14,198 @@ import TimePicker from './TimePicker';
 
 export default function TargetEventCard() {
   const { targetDateTime, setTargetDateTime, timezone, setTimezone } = useCountdownStore();
+  const tzDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Parse targetDateTime if it exists (format: "2025-12-31T23:59:00")
   const dateValue = targetDateTime ? targetDateTime.split('T')[0] : '';
   const timeValue = targetDateTime ? targetDateTime.split('T')[1]?.substring(0, 5) : '';
 
-  // Get all timezone options
   const timezones = useMemo(() => getAllTimezoneOptions(), []);
 
-  // Validate if the selected date/time is in the future
-  const isValidDateTime = useMemo(() => {
-    if (!targetDateTime) return true; // No date selected is valid
-    
-    const target = new Date(targetDateTime);
-    const now = new Date();
-    return target > now;
-  }, [targetDateTime]);
+  const [isTzOpen, setIsTzOpen] = useState(false);
+  const [tzSearch, setTzSearch] = useState('');
+
+  const filteredTimezones = useMemo(() => {
+    const term = tzSearch.toLowerCase().trim();
+    if (!term) return timezones;
+    return timezones.filter((tz) =>
+      `${tz.label} ${tz.value} ${tz.offset}`.toLowerCase().includes(term)
+    );
+  }, [tzSearch, timezones]);
+
+  const selectedTz = useMemo(
+    () => timezones.find((tz) => tz.value === timezone),
+    [timezones, timezone]
+  );
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (tzDropdownRef.current && !tzDropdownRef.current.contains(e.target as Node)) {
+        setIsTzOpen(false);
+      }
+    };
+    if (isTzOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isTzOpen]);
 
   return (
-    <div className="section">
-      <div className="card">
-        <div className="card__header">
-          <h2 className="card__title" style={{ fontSize: 'var(--font-size-lg)' }}>
-            Target Event
-          </h2>
-        </div>
-        <div className="p-4">
-          <div className="field">
-            <label className="field__label">Event Date</label>
-            <DatePicker
-              value={dateValue}
-              onChange={(date) => {
-                if (date && timeValue) {
-                  setTargetDateTime(`${date}T${timeValue}:00`);
-                } else if (date) {
-                  setTargetDateTime(`${date}T00:00:00`);
-                } else {
-                  setTargetDateTime(null);
-                }
-              }}
-            />
-          </div>
+    <SettingsBox>
+      <SettingsHeading>Target Event</SettingsHeading>
 
-          <div className="field">
-            <label className="field__label">Event Time</label>
-            <TimePicker
-              value={timeValue}
-              onChange={(time) => {
-                if (time && dateValue) {
-                  setTargetDateTime(`${dateValue}T${time}:00`);
-                } else if (time) {
-                  const today = new Date().toISOString().split('T')[0];
-                  setTargetDateTime(`${today}T${time}:00`);
-                }
-              }}
-            />
-          </div>
+      <SettingsField>
+        <SettingsLabel>Event Date</SettingsLabel>
+        <SettingsInputFrame>
+          <DatePicker
+            value={dateValue}
+            onChange={(date) => {
+              if (date && timeValue) {
+                setTargetDateTime(`${date}T${timeValue}:00`);
+              } else if (date) {
+                setTargetDateTime(`${date}T00:00:00`);
+              } else {
+                setTargetDateTime(null);
+              }
+            }}
+          />
+        </SettingsInputFrame>
+      </SettingsField>
 
-          <div className="field">
-            <label className="field__label">Timezone</label>
-            <select
-              className="select select--timezone"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-            >
-              {timezones.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.value === 'device' 
-                    ? tz.label
-                    : `${tz.offset} ${tz.label}`
-                  }
-                </option>
-              ))}
-            </select>
-          </div>
+      <SettingsField>
+        <SettingsLabel>Event Time</SettingsLabel>
+        <SettingsInputFrame>
+          <TimePicker
+            value={timeValue}
+            onChange={(time) => {
+              if (time && dateValue) {
+                setTargetDateTime(`${dateValue}T${time}:00`);
+              } else if (time) {
+                const today = new Date().toISOString().split('T')[0];
+                setTargetDateTime(`${today}T${time}:00`);
+              }
+            }}
+          />
+        </SettingsInputFrame>
+      </SettingsField>
 
-          {targetDateTime && !isValidDateTime && (
-            <div
+      <SettingsField>
+        <SettingsLabel>Timezone</SettingsLabel>
+        <SettingsInputFrame>
+          <div
+            ref={tzDropdownRef}
+            className="timezone-picker-container h-full border"
+          >
+            <button
+              type="button"
+              onClick={() => setIsTzOpen((open) => !open)}
+              className="w-full text-left h-full cursor-pointer"
               style={{
-                marginTop: 'var(--space-4)',
-                padding: 'var(--space-3)',
-                backgroundColor: 'var(--color-error)',
-                color: '#FFFFFF',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: 'var(--font-size-sm)',
+                minHeight: '3rem',
+                width: '100%',
+                background: 'transparent',
+                color: 'var(--color-text)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--space-2)',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+                border: 'var(--border-width) solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-4)',
               }}
             >
-              <span>⚠️</span>
-              <span>
-                The selected date/time is in the past. The render page will show completion content immediately.
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {selectedTz
+                  ? selectedTz.value === 'device'
+                    ? `${selectedTz.label} (device)`
+                    : `${selectedTz.offset} ${selectedTz.label}`
+                  : 'Select a timezone'}
               </span>
-            </div>
-          )}
+              <span style={{ opacity: 0.7, fontSize: '0.875rem' }}>▼</span>
+            </button>
 
-          <p className="text-sm text-muted" style={{ marginTop: 'var(--space-4)' }}>
-            Set a fixed target date and time for the countdown. The timer will count down to this exact moment.
-            {targetDateTime && isValidDateTime && (
-              <span
+            {isTzOpen && (
+              <div
                 style={{
-                  display: 'block',
-                  marginTop: 'var(--space-2)',
-                  color: 'var(--color-success)',
-                  fontWeight: 'var(--font-weight-medium)',
+                  position: 'absolute',
+                  zIndex: 20,
+                  top: '110%',
+                  left: 0,
+                  right: 0,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-lg)',
+                  overflow: 'hidden',
                 }}
               >
-                ✓ Valid future date/time selected.
-              </span>
+                <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--color-border)' }}>
+                  <input
+                    type="text"
+                    value={tzSearch}
+                    onChange={(e) => setTzSearch(e.target.value)}
+                    placeholder="Search city or offset (e.g., UTC, New York)"
+                    autoFocus
+                    style={{
+                      width: '100%',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--color-text)',
+                      fontSize: 'var(--font-size-base)',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div style={{ maxHeight: '14rem', overflowY: 'auto' }}>
+                  {filteredTimezones.map((tz) => {
+                    const isActive = tz.value === timezone;
+                    return (
+                      <button
+                        key={tz.value}
+                        type="button"
+                        onClick={() => {
+                          setTimezone(tz.value);
+                          setIsTzOpen(false);
+                          setTzSearch('');
+                        }}
+                        className="w-full text-left"
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          width: '100%',
+                          border: 'none',
+                          background: isActive ? 'var(--color-surface-raised)' : 'transparent',
+                          color: 'var(--color-text)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {tz.label}
+                        </span>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                          {tz.value === 'device' ? 'device' : tz.offset}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {filteredTimezones.length === 0 && (
+                    <div
+                      style={{
+                        padding: '0.6rem 0.75rem',
+                        color: 'var(--color-text-muted)',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      No matches found
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-          </p>
-        </div>
-      </div>
-    </div>
+          </div>
+        </SettingsInputFrame>
+      </SettingsField>
+    </SettingsBox>
   );
 }
 

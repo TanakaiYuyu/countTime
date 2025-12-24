@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { useUiScaleToSetRem } from '@telemetryos/sdk/react';
+import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
 import { useCountdownStore } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import SettingsHeader from '../components/settings/SettingsHeader';
@@ -9,6 +9,7 @@ import TimeUnitsCard from '../components/settings/TimeUnitsCard';
 import MessagingCard from '../components/settings/MessagingCard';
 import CompletionContentCard from '../components/settings/CompletionContentCard';
 import ThemeBackgroundCard from '../components/settings/ThemeBackgroundCard';
+import CompletionTimeCard from '../components/settings/CompletionTimeCard';
 
 /**
  * TelemetryOS Countdown Timer Settings Page
@@ -28,19 +29,14 @@ export default function SettingsPage() {
       : 1080,
   });
 
-  // Calculate scale factor based on viewport height
-  // For high-resolution displays (TVs, large screens), scale proportionally
-  // Use viewport height as the primary scaling dimension for consistent sizing
+  const uiAspectRatio = useUiAspectRatio();
+
+  // Calculate scale factor using TelemetryOS UI scale hooks
   const scaleFactor = useMemo(() => {
-    const designHeight = 1080; // Design reference height
+    const designHeight = 900;
     const currentHeight = viewportSize.height;
-    
-    // Scale based on height to maintain aspect ratio
-    // No upper limit - scales infinitely for high-res displays
     const scale = currentHeight / designHeight;
-    
-    // Only set a minimum to prevent too-small displays
-    return Math.max(0.1, scale);
+    return Math.max(0.85, Math.min(1.8, scale));
   }, [viewportSize.height]);
 
   // Update viewport size on resize
@@ -75,6 +71,7 @@ export default function SettingsPage() {
   // CRITICAL: Call useUiScaleToSetRem() to set REM base for responsive scaling
   // This ensures all rem-based CSS scales properly for different screen sizes
   useUiScaleToSetRem(scaleFactor);
+  useUiResponsiveFactors(scaleFactor, uiAspectRatio);
 
   // Get all current settings and setters from store
   // This allows us to explicitly save all values when Save button is clicked
@@ -87,6 +84,8 @@ export default function SettingsPage() {
     unitLabels,
     titleRichText,
     ctaRichText,
+    completionTimeMode,
+    completionTimeValue,
     completionType,
     completionRichText,
     completionMediaId,
@@ -104,6 +103,8 @@ export default function SettingsPage() {
     setUnitLabels,
     setTitleRichText,
     setCtaRichText,
+    setCompletionTimeMode,
+    setCompletionTimeValue,
     setCompletionType,
     setCompletionRichText,
     setCompletionMediaId,
@@ -130,6 +131,8 @@ export default function SettingsPage() {
       unitLabels,
       titleRichText,
       ctaRichText,
+      completionTimeMode,
+      completionTimeValue,
       completionType,
       completionRichText,
       completionMediaId,
@@ -149,6 +152,8 @@ export default function SettingsPage() {
     console.log('  unitLabels:', JSON.stringify(unitLabels, null, 2));
     console.log('  titleRichText:', titleRichText);
     console.log('  ctaRichText:', ctaRichText);
+    console.log('  completionTimeMode:', completionTimeMode);
+    console.log('  completionTimeValue:', completionTimeValue);
     console.log('  completionType:', completionType);
     console.log('  completionRichText:', completionRichText);
     console.log('  completionMediaId:', completionMediaId);
@@ -166,6 +171,8 @@ export default function SettingsPage() {
     unitLabels,
     titleRichText,
     ctaRichText,
+    completionTimeMode,
+    completionTimeValue,
     completionType,
     completionRichText,
     completionMediaId,
@@ -198,6 +205,8 @@ export default function SettingsPage() {
         unitLabels,
         titleRichText,
         ctaRichText,
+    completionTimeMode,
+    completionTimeValue,
         completionType,
         completionRichText,
         completionMediaId,
@@ -230,6 +239,9 @@ export default function SettingsPage() {
       console.log('  Messaging:');
       console.log('    titleRichText:', titleRichText);
       console.log('    ctaRichText:', ctaRichText);
+      console.log('  Completion Time:');
+      console.log('    completionTimeMode:', completionTimeMode);
+      console.log('    completionTimeValue:', completionTimeValue);
       console.log('  Completion:');
       console.log('    completionType:', completionType);
       console.log('    completionRichText:', completionRichText);
@@ -290,6 +302,14 @@ export default function SettingsPage() {
       console.log('Writing completionMediaId:', completionMediaId);
       setCompletionMediaId(completionMediaId);
       savedSettings.completionMediaId = completionMediaId;
+
+      console.log('Writing completionTimeMode:', completionTimeMode);
+      setCompletionTimeMode(completionTimeMode);
+      savedSettings.completionTimeMode = completionTimeMode;
+
+      console.log('Writing completionTimeValue:', completionTimeValue);
+      setCompletionTimeValue(completionTimeValue);
+      savedSettings.completionTimeValue = completionTimeValue;
       
       console.log('Writing primaryColor:', primaryColor);
       setPrimaryColor(primaryColor);
@@ -437,6 +457,7 @@ export default function SettingsPage() {
             <TargetEventCard />
             <DisplayStyleCard />
             <TimeUnitsCard />
+            <CompletionTimeCard />
             <MessagingCard />
             <CompletionContentCard />
             <ThemeBackgroundCard />

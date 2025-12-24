@@ -46,6 +46,15 @@ export function useCountdownStore() {
     defaultStore.unitLabels
   );
 
+  // Completion time metadata
+  const [, completionTimeMode, setCompletionTimeMode] = useStoreState<
+    CountdownStore['completionTimeMode']
+  >(instanceStore, 'completionTimeMode', defaultStore.completionTimeMode);
+
+  const [, completionTimeValue, setCompletionTimeValue] = useStoreState<
+    CountdownStore['completionTimeValue']
+  >(instanceStore, 'completionTimeValue', defaultStore.completionTimeValue);
+
   // Messaging
   const [, titleRichText, setTitleRichText] = useStoreState<string>(
     instanceStore,
@@ -133,6 +142,12 @@ export function useCountdownStore() {
     setVisibleUnits,
     unitLabels,
     setUnitLabels,
+
+    // Completion time
+    completionTimeMode,
+    setCompletionTimeMode,
+    completionTimeValue,
+    setCompletionTimeValue,
 
     // Messaging
     titleRichText,

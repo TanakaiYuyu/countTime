@@ -1,7 +1,14 @@
+import {
+  SettingsBox,
+  SettingsField,
+  SettingsHeading,
+  SettingsLabel,
+} from '@telemetryos/sdk/react';
 import { useCountdownStore } from '../../hooks/useCountdownStore';
 import ColorPickerField from './ColorPickerField';
 import BackgroundTypeSelector from './BackgroundTypeSelector';
 import BackgroundOpacitySlider from './BackgroundOpacitySlider';
+import TelemetryMediaPicker from './TelemetryMediaPicker';
 
 export default function ThemeBackgroundCard() {
   const {
@@ -13,73 +20,48 @@ export default function ThemeBackgroundCard() {
     setBackgroundType,
     backgroundColor,
     setBackgroundColor,
+    backgroundMediaId,
+    setBackgroundMediaId,
     backgroundOpacity,
     setBackgroundOpacity,
   } = useCountdownStore();
 
   return (
-    <div className="section">
-      <div className="card">
-        <div className="card__header">
-          <h2 className="card__title" style={{ fontSize: 'var(--font-size-lg)' }}>
-            Theme & Background
-          </h2>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-4">
-            <ColorPickerField
-              label="Primary Color"
-              value={primaryColor}
-              onChange={setPrimaryColor}
-            />
-            <ColorPickerField
-              label="Secondary Color"
-              value={secondaryColor}
-              onChange={setSecondaryColor}
-            />
-          </div>
+    <SettingsBox>
+      <SettingsHeading>Theme & Background</SettingsHeading>
 
-          <BackgroundTypeSelector
-            backgroundType={backgroundType}
-            onBackgroundTypeChange={setBackgroundType}
-          />
-
-          {backgroundType === 'solid' && (
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <ColorPickerField
-                label="Background Color"
-                value={backgroundColor}
-                onChange={setBackgroundColor}
-              />
-            </div>
-          )}
-
-          {backgroundType === 'media' && (
-            <div className="field" style={{ marginTop: 'var(--space-4)' }}>
-              <label className="field__label">Media Selection</label>
-              <div
-                className="border rounded-md p-8 text-center"
-                style={{
-                  borderColor: 'var(--color-border)',
-                  backgroundColor: 'var(--color-surface-raised)',
-                  borderStyle: 'dashed',
-                }}
-              >
-                <p className="text-muted">Media picker placeholder</p>
-                <button className="btn--small" type="button" style={{ marginTop: 'var(--space-3)' }}>
-                  Select Media
-                </button>
-              </div>
-            </div>
-          )}
-
-          <BackgroundOpacitySlider
-            value={backgroundOpacity}
-            onChange={setBackgroundOpacity}
-          />
-        </div>
+      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))' }}>
+        <ColorPickerField label="Primary Color" value={primaryColor} onChange={setPrimaryColor} />
+        <ColorPickerField label="Secondary Color" value={secondaryColor} onChange={setSecondaryColor} />
       </div>
-    </div>
+
+      <SettingsField>
+        <BackgroundTypeSelector backgroundType={backgroundType} onBackgroundTypeChange={setBackgroundType} />
+      </SettingsField>
+
+      {backgroundType === 'solid' && (
+        <SettingsField>
+          <ColorPickerField label="Background Color" value={backgroundColor} onChange={setBackgroundColor} />
+        </SettingsField>
+      )}
+
+      {backgroundType === 'media' && (
+        <SettingsField>
+          <SettingsLabel>Background Media</SettingsLabel>
+          <TelemetryMediaPicker
+            label="Select Background"
+            value={backgroundMediaId}
+            onChange={setBackgroundMediaId}
+            allowedTypes={['image', 'video']}
+            hint="Pulled from TelemetryOS media. Preview only; final render happens on /render."
+          />
+        </SettingsField>
+      )}
+
+      <SettingsField>
+        <BackgroundOpacitySlider value={backgroundOpacity} onChange={setBackgroundOpacity} />
+      </SettingsField>
+    </SettingsBox>
   );
 }
 

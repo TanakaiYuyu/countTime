@@ -93,6 +93,35 @@
   flex-direction: column;
 }
 
+.settings__box {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.settings__input-frame>* {
+  border: none;
+}
+
+.date-picker-container {
+  position: relative;
+  padding: 0;
+}
+
+.time-picker-container {
+  position: relative;
+  padding: 0;
+}
+
+.timezone-picker-container {
+  position: relative;
+  padding: 0;
+}
+
 /* ===================
    CARD ANIMATIONS
    =================== */
