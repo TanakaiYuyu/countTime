@@ -103,10 +103,6 @@
   padding: var(--space-6);
 }
 
-.settings__input-frame>* {
-  border: none;
-}
-
 .date-picker-container {
   position: relative;
   padding: 0;
@@ -219,18 +215,12 @@
 textarea.input {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: var(--font-size-sm);
   font-family: inherit;
   transition: all var(--transition-base);
-}
-
-.input,
-.select {
-  height: var(--height-input);
 }
 
 textarea.input {
@@ -244,12 +234,6 @@ textarea.input {
 textarea.input::placeholder {
   color: var(--color-text-muted);
   opacity: 0.7;
-}
-
-.input:hover,
-.select:hover,
-textarea.input:hover {
-  border-color: var(--color-accent);
 }
 
 .input:focus,

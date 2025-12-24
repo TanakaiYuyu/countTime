@@ -115,7 +115,6 @@ export default function TargetEventCard() {
               onClick={() => setIsTzOpen((open) => !open)}
               className="w-full text-left h-full cursor-pointer"
               style={{
-                minHeight: '3rem',
                 width: '100%',
                 background: 'transparent',
                 color: 'var(--color-text)',
@@ -123,8 +122,6 @@ export default function TargetEventCard() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '0.75rem',
-                border: 'var(--border-width) solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
                 padding: 'var(--space-4)',
               }}
             >
@@ -167,6 +164,7 @@ export default function TargetEventCard() {
                       color: 'var(--color-text)',
                       fontSize: 'var(--font-size-base)',
                       outline: 'none',
+                      transition: 'all var(--transition-base)',
                     }}
                   />
                 </div>
@@ -192,6 +190,7 @@ export default function TargetEventCard() {
                           cursor: 'pointer',
                           display: 'flex',
                           justifyContent: 'space-between',
+                          transition: 'all var(--transition-base)',
                           gap: '0.5rem',
                         }}
                       >
@@ -210,6 +209,7 @@ export default function TargetEventCard() {
                         padding: '0.6rem 0.75rem',
                         color: 'var(--color-text-muted)',
                         fontSize: '0.9rem',
+                        transition: 'all var(--transition-base)',
                       }}
                     >
                       No matches found
