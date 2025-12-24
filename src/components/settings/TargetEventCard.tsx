@@ -3,7 +3,6 @@ import {
   SettingsBox,
   SettingsField,
   SettingsHeading,
-  SettingsHint,
   SettingsInputFrame,
   SettingsLabel,
 } from '@telemetryos/sdk/react';
