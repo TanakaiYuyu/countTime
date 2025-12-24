@@ -7,10 +7,10 @@ import {
   SettingsRadioFrame,
   SettingsRadioLabel,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 
 export default function DisplayStyleCard() {
-  const { displayStyle, setDisplayStyle } = useCountdownStore();
+  const { displayStyle, setDisplayStyle } = useCountdownStoreContext();
 
   const styles = [
     { value: 'digital' as const, label: 'Digital / LED', desc: 'Classic digital display with monospaced numbers' },

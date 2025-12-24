@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { configure } from '@telemetryos/sdk';
+import { CountdownStoreProvider } from './hooks/useCountdownStore';
+import { initializeCountdownStore } from './store/countdownStore';
 import App from './App.tsx';
 import './index.css';
 
@@ -28,9 +30,16 @@ const hasValidInstance = urlParams.has('applicationInstance') &&
   urlParams.get('applicationInstance')?.length === 40;
 
 // Check if we're in local development (not in TelemetryOS Studio)
-const isLocalDev = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1' ||
-                   window.location.hostname.includes('localhost');
+const hostname = window.location.hostname;
+const isPrivateIp =
+  /^192\.168\./.test(hostname) ||
+  /^10\./.test(hostname) ||
+  /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+const isLocalDev =
+  hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname.includes('localhost') ||
+  isPrivateIp;
 
 if (isLocalDev && !hasValidInstance) {
   // For local development, add the parameter and reload to ensure SDK reads it correctly
@@ -51,6 +60,12 @@ if (!isLocalDev || hasValidInstance) {
     console.info('The app will work but SDK features may be limited.');
   }
 }
+
+// Initialize the device-scoped countdown store once per application lifetime.
+// Defaults are hydrated only for unset keys.
+void initializeCountdownStore().catch((error) => {
+  console.warn('Countdown store initialization failed:', error);
+});
 
 // Suppress harmless TelemetryOS SDK unsubscribe timeout errors
 // These occur when the SDK's internal cleanup tries to unsubscribe from store subscriptions
@@ -80,6 +95,8 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <CountdownStoreProvider>
+      <App />
+    </CountdownStoreProvider>
   </StrictMode>
 );

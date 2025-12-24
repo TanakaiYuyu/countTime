@@ -4,7 +4,7 @@ import {
   SettingsHeading,
   SettingsLabel,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 import ColorPickerField from './ColorPickerField';
 import BackgroundTypeSelector from './BackgroundTypeSelector';
 import BackgroundOpacitySlider from './BackgroundOpacitySlider';
@@ -24,7 +24,7 @@ export default function ThemeBackgroundCard() {
     setBackgroundMediaId,
     backgroundOpacity,
     setBackgroundOpacity,
-  } = useCountdownStore();
+  } = useCountdownStoreContext();
 
   return (
     <SettingsBox>

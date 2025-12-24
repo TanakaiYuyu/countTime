@@ -6,10 +6,10 @@ import {
   SettingsLabel,
   SettingsTextAreaFrame,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 
 export default function MessagingCard() {
-  const { titleRichText, setTitleRichText, ctaRichText, setCtaRichText } = useCountdownStore();
+  const { titleRichText, setTitleRichText, ctaRichText, setCtaRichText } = useCountdownStoreContext();
   const [focusedField, setFocusedField] = useState<'title' | 'cta' | null>(null);
 
   return (

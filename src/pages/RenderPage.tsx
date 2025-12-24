@@ -1,7 +1,7 @@
 import { media } from '@telemetryos/sdk';
 import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
 import { useMemo, useEffect, useState } from 'react';
-import { useCountdownStore } from '../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import CountTimer from '../components/countdown-styles/CountTimer';
 
@@ -43,6 +43,7 @@ export default function RenderPage() {
   const {
     targetDateTime,
     timezone,
+    completionDurationMs,
     primaryColor,
     backgroundType,
     backgroundColor,
@@ -59,7 +60,7 @@ export default function RenderPage() {
     completionRichText,
     completionMediaId,
     secondaryColor,
-  } = useCountdownStore();
+  } = useCountdownStoreContext();
 
   // Log settings when render page loads or settings change
   // useStoreState already handles defaults, so we don't need to initialize
@@ -68,6 +69,7 @@ export default function RenderPage() {
     const allSettings = {
       targetDateTime,
       timezone,
+      completionDurationMs,
       displayStyle,
       visibleUnits,
       unitLabels,
@@ -109,6 +111,7 @@ export default function RenderPage() {
     console.log('Individual values:');
     console.log('  targetDateTime:', targetDateTime);
     console.log('  timezone:', timezone);
+    console.log('  completionDurationMs:', completionDurationMs);
     console.log('  displayStyle:', displayStyle);
     console.log('  visibleUnits:', JSON.stringify(visibleUnits, null, 2));
     console.log('  unitLabels:', JSON.stringify(unitLabels, null, 2));
@@ -144,13 +147,19 @@ export default function RenderPage() {
     backgroundColor,
     backgroundMediaId,
     backgroundOpacity,
+    completionDurationMs,
   ]);
 
   const durationMs = useMemo(() => {
-    if (!targetDateTime) return 5 * 60 * 1000;
-    const target = new Date(targetDateTime).getTime();
-    return Math.max(0, target - Date.now());
-  }, [targetDateTime]);
+    if (typeof completionDurationMs === 'number') {
+      return Math.max(0, completionDurationMs);
+    }
+    if (targetDateTime) {
+      const target = new Date(targetDateTime).getTime();
+      return Math.max(0, target - Date.now());
+    }
+    return defaultStore.completionDurationMs;
+  }, [completionDurationMs, targetDateTime]);
 
   const [backgroundMedia, setBackgroundMedia] = useState<{
     url: string;

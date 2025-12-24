@@ -7,12 +7,12 @@ import {
   SettingsInputFrame,
   SettingsLabel,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 
 type UnitKey = 'days' | 'hours' | 'minutes' | 'seconds';
 
 export default function TimeUnitsCard() {
-  const { visibleUnits, setVisibleUnits, unitLabels, setUnitLabels } = useCountdownStore();
+  const { visibleUnits, setVisibleUnits, unitLabels, setUnitLabels } = useCountdownStoreContext();
 
   const units: { key: UnitKey; label: string }[] = [
     { key: 'days', label: 'Days' },

@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import SettingsHeader from '../components/settings/SettingsHeader';
 import TargetEventCard from '../components/settings/TargetEventCard';
@@ -10,6 +10,7 @@ import MessagingCard from '../components/settings/MessagingCard';
 import CompletionContentCard from '../components/settings/CompletionContentCard';
 import ThemeBackgroundCard from '../components/settings/ThemeBackgroundCard';
 import CompletionTimeCard from '../components/settings/CompletionTimeCard';
+import RenderPage from './RenderPage';
 
 /**
  * TelemetryOS Countdown Timer Settings Page
@@ -73,12 +74,12 @@ export default function SettingsPage() {
   useUiScaleToSetRem(scaleFactor);
   useUiResponsiveFactors(scaleFactor, uiAspectRatio);
 
-  // Get all current settings and setters from store
-  // This allows us to explicitly save all values when Save button is clicked
+  // Get all current settings and setters from the shared TelemetryOS store
   const {
     // Current values
     targetDateTime,
     timezone,
+    completionDurationMs,
     displayStyle,
     visibleUnits,
     unitLabels,
@@ -98,6 +99,7 @@ export default function SettingsPage() {
     // Setters
     setTargetDateTime,
     setTimezone,
+    setCompletionDurationMs,
     setDisplayStyle,
     setVisibleUnits,
     setUnitLabels,
@@ -114,11 +116,12 @@ export default function SettingsPage() {
     setBackgroundColor,
     setBackgroundMediaId,
     setBackgroundOpacity,
-  } = useCountdownStore();
+  } = useCountdownStoreContext();
 
   // Save message state
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Log initial settings when component mounts or settings change
   useEffect(() => {
@@ -126,6 +129,7 @@ export default function SettingsPage() {
     const allSettings = {
       targetDateTime,
       timezone,
+      completionDurationMs,
       displayStyle,
       visibleUnits,
       unitLabels,
@@ -163,6 +167,7 @@ export default function SettingsPage() {
     console.log('  backgroundColor:', backgroundColor);
     console.log('  backgroundMediaId:', backgroundMediaId);
     console.log('  backgroundOpacity:', backgroundOpacity);
+    console.log('  completionDurationMs:', completionDurationMs);
   }, [
     targetDateTime,
     timezone,
@@ -182,6 +187,7 @@ export default function SettingsPage() {
     backgroundColor,
     backgroundMediaId,
     backgroundOpacity,
+    completionDurationMs,
   ]);
   
   // Handle save action - explicitly persist all current settings to store
@@ -200,13 +206,14 @@ export default function SettingsPage() {
       const currentSettings = {
         targetDateTime,
         timezone,
+        completionDurationMs,
         displayStyle,
         visibleUnits,
         unitLabels,
         titleRichText,
         ctaRichText,
-    completionTimeMode,
-    completionTimeValue,
+        completionTimeMode,
+        completionTimeValue,
         completionType,
         completionRichText,
         completionMediaId,
@@ -232,6 +239,7 @@ export default function SettingsPage() {
       console.log('  Target Event:');
       console.log('    targetDateTime:', targetDateTime);
       console.log('    timezone:', timezone);
+      console.log('    completionDurationMs:', completionDurationMs);
       console.log('  Display Configuration:');
       console.log('    displayStyle:', displayStyle);
       console.log('    visibleUnits:', JSON.stringify(visibleUnits, null, 2));
@@ -270,6 +278,10 @@ export default function SettingsPage() {
       console.log('Writing timezone:', timezone);
       setTimezone(timezone);
       savedSettings.timezone = timezone;
+
+      console.log('Writing completionDurationMs:', completionDurationMs);
+      setCompletionDurationMs(completionDurationMs);
+      savedSettings.completionDurationMs = completionDurationMs;
       
       console.log('Writing displayStyle:', displayStyle);
       setDisplayStyle(displayStyle);
@@ -417,13 +429,9 @@ export default function SettingsPage() {
     console.log("====================================================================================")
   };
 
-  // Handle preview action - open render page in new window
+  // Handle preview action - render /render inside an in-app modal so it shares the same store instance
   const handlePreview = () => {
-    // Get current URL and open render page
-    const currentUrl = new URL(window.location.href);
-    currentUrl.pathname = '/render';
-    // Preserve query parameters (like applicationInstance)
-    window.open(currentUrl.toString(), 'noopener,noreferrer');
+    setIsPreviewOpen(true);
   };
 
   return (
@@ -465,6 +473,41 @@ export default function SettingsPage() {
           
         </div>
       </div>
+
+      {isPreviewOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.65)', padding: '2rem' }}
+        >
+          <div
+            className="w-full max-w-6xl bg-[#0b0d17] rounded-lg shadow-2xl overflow-hidden relative"
+            style={{ maxHeight: '90vh' }}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <div style={{ color: '#fff', fontWeight: 600 }}>Preview (/render)</div>
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(false)}
+                style={{
+                  color: '#fff',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: '6px',
+                  padding: '0.4rem 0.75rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ height: '80vh', overflow: 'hidden', background: '#000' }}>
+              <RenderPage />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

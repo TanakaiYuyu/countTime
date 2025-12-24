@@ -8,7 +8,7 @@ import {
   SettingsRadioLabel,
   SettingsTextAreaFrame,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 import TelemetryMediaPicker from './TelemetryMediaPicker';
 
 export default function CompletionContentCard() {
@@ -19,7 +19,7 @@ export default function CompletionContentCard() {
     setCompletionRichText,
     completionMediaId,
     setCompletionMediaId,
-  } = useCountdownStore();
+  } = useCountdownStoreContext();
 
   const types = [
     {

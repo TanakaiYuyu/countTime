@@ -1,47 +1,124 @@
-/**
- * Custom hook for accessing countdown store state
- * Uses TelemetryOS SDK's useStoreState hook
- */
-
-import { useMemo } from 'react';
+import {
+  createContext,
+  createElement,
+  useContext,
+  useMemo,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
 import { useStoreState } from '@telemetryos/sdk/react';
-import { store } from '@telemetryos/sdk';
+import {
+  defaultStore,
+  getCountdownStore,
+  getCountdownStoreScope,
+  initializeCountdownStore,
+} from '../store/countdownStore';
 import type { CountdownStore } from '../store/countdownStore';
-import { defaultStore } from '../store/countdownStore';
+
+type CountdownStoreContextValue = {
+  // Target Event
+  targetDateTime: string | null;
+  setTargetDateTime: Dispatch<SetStateAction<string | null>>;
+  timezone: string;
+  setTimezone: Dispatch<SetStateAction<string>>;
+  completionDurationMs: number;
+  setCompletionDurationMs: Dispatch<SetStateAction<number>>;
+
+  // Display Configuration
+  displayStyle: CountdownStore['displayStyle'];
+  setDisplayStyle: Dispatch<SetStateAction<CountdownStore['displayStyle']>>;
+  visibleUnits: CountdownStore['visibleUnits'];
+  setVisibleUnits: Dispatch<SetStateAction<CountdownStore['visibleUnits']>>;
+  unitLabels: CountdownStore['unitLabels'];
+  setUnitLabels: Dispatch<SetStateAction<CountdownStore['unitLabels']>>;
+
+  // Completion time
+  completionTimeMode: CountdownStore['completionTimeMode'];
+  setCompletionTimeMode: Dispatch<SetStateAction<CountdownStore['completionTimeMode']>>;
+  completionTimeValue: CountdownStore['completionTimeValue'];
+  setCompletionTimeValue: Dispatch<SetStateAction<CountdownStore['completionTimeValue']>>;
+
+  // Messaging
+  titleRichText: string;
+  setTitleRichText: Dispatch<SetStateAction<string>>;
+  ctaRichText: string;
+  setCtaRichText: Dispatch<SetStateAction<string>>;
+
+  // Completion
+  completionType: CountdownStore['completionType'];
+  setCompletionType: Dispatch<SetStateAction<CountdownStore['completionType']>>;
+  completionRichText: string;
+  setCompletionRichText: Dispatch<SetStateAction<string>>;
+  completionMediaId: string | null;
+  setCompletionMediaId: Dispatch<SetStateAction<string | null>>;
+
+  // Theme
+  primaryColor: string;
+  setPrimaryColor: Dispatch<SetStateAction<string>>;
+  secondaryColor: string;
+  setSecondaryColor: Dispatch<SetStateAction<string>>;
+
+  // Background
+  backgroundType: CountdownStore['backgroundType'];
+  setBackgroundType: Dispatch<SetStateAction<CountdownStore['backgroundType']>>;
+  backgroundColor: string;
+  setBackgroundColor: Dispatch<SetStateAction<string>>;
+  backgroundMediaId: string | null;
+  setBackgroundMediaId: Dispatch<SetStateAction<string | null>>;
+  backgroundOpacity: number;
+  setBackgroundOpacity: Dispatch<SetStateAction<number>>;
+};
 
 /**
- * Hook to access and update countdown store state
- * All state is stored in SDK's local scope (shared between settings and render)
+ * Hook to access and update countdown store state.
+ * The store lives at the TelemetryOS device scope and is initialized once.
  */
-export function useCountdownStore() {
-  // Memoize the store instance to prevent creating new subscriptions on every render
-  const instanceStore = useMemo(() => store().instance, []);
+export function useCountdownStore(): CountdownStoreContextValue {
+  const deviceStore = useMemo(() => {
+    void initializeCountdownStore()
+      .then(() => {
+        const scope = getCountdownStoreScope();
+        if (scope && scope !== 'device') {
+          console.warn(`[countdownStore] Using fallback store scope: ${scope}`);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to initialize countdown store', err);
+      });
+    return getCountdownStore();
+  }, []);
 
   // Target Event
   const [, targetDateTime, setTargetDateTime] = useStoreState<string | null>(
-    instanceStore,
+    deviceStore,
     'targetDateTime',
     defaultStore.targetDateTime
   );
   const [, timezone, setTimezone] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'timezone',
     defaultStore.timezone
+  );
+  const [, completionDurationMs, setCompletionDurationMs] = useStoreState<number>(
+    deviceStore,
+    'completionDurationMs',
+    defaultStore.completionDurationMs
   );
 
   // Display Configuration
   const [, displayStyle, setDisplayStyle] = useStoreState<
     'digital' | 'flip' | 'circular' | 'blocks'
-  >(instanceStore, 'displayStyle', defaultStore.displayStyle);
+  >(deviceStore, 'displayStyle', defaultStore.displayStyle);
 
   const [, visibleUnits, setVisibleUnits] = useStoreState<CountdownStore['visibleUnits']>(
-    instanceStore,
+    deviceStore,
     'visibleUnits',
     defaultStore.visibleUnits
   );
 
   const [, unitLabels, setUnitLabels] = useStoreState<CountdownStore['unitLabels']>(
-    instanceStore,
+    deviceStore,
     'unitLabels',
     defaultStore.unitLabels
   );
@@ -49,21 +126,21 @@ export function useCountdownStore() {
   // Completion time metadata
   const [, completionTimeMode, setCompletionTimeMode] = useStoreState<
     CountdownStore['completionTimeMode']
-  >(instanceStore, 'completionTimeMode', defaultStore.completionTimeMode);
+  >(deviceStore, 'completionTimeMode', defaultStore.completionTimeMode);
 
   const [, completionTimeValue, setCompletionTimeValue] = useStoreState<
     CountdownStore['completionTimeValue']
-  >(instanceStore, 'completionTimeValue', defaultStore.completionTimeValue);
+  >(deviceStore, 'completionTimeValue', defaultStore.completionTimeValue);
 
   // Messaging
   const [, titleRichText, setTitleRichText] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'titleRichText',
     defaultStore.titleRichText
   );
 
   const [, ctaRichText, setCtaRichText] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'ctaRichText',
     defaultStore.ctaRichText
   );
@@ -71,29 +148,29 @@ export function useCountdownStore() {
   // Completion
   const [, completionType, setCompletionType] = useStoreState<
     'richText' | 'media' | 'none'
-  >(instanceStore, 'completionType', defaultStore.completionType);
+  >(deviceStore, 'completionType', defaultStore.completionType);
 
   const [, completionRichText, setCompletionRichText] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'completionRichText',
     defaultStore.completionRichText
   );
 
   const [, completionMediaId, setCompletionMediaId] = useStoreState<string | null>(
-    instanceStore,
+    deviceStore,
     'completionMediaId',
     defaultStore.completionMediaId
   );
 
   // Theme
   const [, primaryColor, setPrimaryColor] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'primaryColor',
     defaultStore.primaryColor
   );
 
   const [, secondaryColor, setSecondaryColor] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'secondaryColor',
     defaultStore.secondaryColor
   );
@@ -101,32 +178,25 @@ export function useCountdownStore() {
   // Background
   const [, backgroundType, setBackgroundType] = useStoreState<
     'default' | 'solid' | 'media'
-  >(instanceStore, 'backgroundType', defaultStore.backgroundType);
+  >(deviceStore, 'backgroundType', defaultStore.backgroundType);
 
   const [, backgroundColor, setBackgroundColor] = useStoreState<string>(
-    instanceStore,
+    deviceStore,
     'backgroundColor',
     defaultStore.backgroundColor
   );
 
   const [, backgroundMediaId, setBackgroundMediaId] = useStoreState<string | null>(
-    instanceStore,
+    deviceStore,
     'backgroundMediaId',
     defaultStore.backgroundMediaId
   );
 
   const [, backgroundOpacity, setBackgroundOpacity] = useStoreState<number>(
-    instanceStore,
+    deviceStore,
     'backgroundOpacity',
     defaultStore.backgroundOpacity
   );
-
-  // Note: We do NOT unsubscribe on component unmount because:
-  // 1. The TelemetryOS SDK store persists data across component mounts/unmounts
-  // 2. Multiple components (SettingsPage, RenderPage) share the same store instance
-  // 3. Unsubscribing would cause data loss when navigating between pages
-  // 4. The SDK manages subscription lifecycle internally via useStoreState
-  // The store instance and subscriptions persist for the lifetime of the application instance
 
   return {
     // Target Event
@@ -134,6 +204,8 @@ export function useCountdownStore() {
     setTargetDateTime,
     timezone,
     setTimezone,
+    completionDurationMs,
+    setCompletionDurationMs,
 
     // Display Configuration
     displayStyle,
@@ -180,4 +252,19 @@ export function useCountdownStore() {
     setBackgroundOpacity,
   };
 }
+
+const CountdownStoreContext = createContext<CountdownStoreContextValue | null>(null);
+
+export const CountdownStoreProvider = ({ children }: { children: ReactNode }) => {
+  const value = useCountdownStore();
+  return createElement(CountdownStoreContext.Provider, { value }, children);
+};
+
+export const useCountdownStoreContext = (): CountdownStoreContextValue => {
+  const context = useContext(CountdownStoreContext);
+  if (!context) {
+    throw new Error('useCountdownStoreContext must be used within CountdownStoreProvider');
+  }
+  return context;
+};
 

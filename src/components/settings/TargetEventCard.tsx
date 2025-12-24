@@ -6,13 +6,20 @@ import {
   SettingsInputFrame,
   SettingsLabel,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
+import { defaultStore } from '../../store/countdownStore';
 import { getAllTimezoneOptions } from '../../utils/timezones';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
 
 export default function TargetEventCard() {
-  const { targetDateTime, setTargetDateTime, timezone, setTimezone } = useCountdownStore();
+  const {
+    targetDateTime,
+    setTargetDateTime,
+    timezone,
+    setTimezone,
+    setCompletionDurationMs,
+  } = useCountdownStoreContext();
   const tzDropdownRef = useRef<HTMLDivElement | null>(null);
 
   const dateValue = targetDateTime ? targetDateTime.split('T')[0] : '';
@@ -36,6 +43,16 @@ export default function TargetEventCard() {
     [timezones, timezone]
   );
 
+  const updateTarget = (value: string | null) => {
+    setTargetDateTime(value);
+    if (value) {
+      const msUntilTarget = Math.max(0, new Date(value).getTime() - Date.now());
+      setCompletionDurationMs(msUntilTarget);
+    } else {
+      setCompletionDurationMs(defaultStore.completionDurationMs);
+    }
+  };
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -58,11 +75,11 @@ export default function TargetEventCard() {
             value={dateValue}
             onChange={(date) => {
               if (date && timeValue) {
-                setTargetDateTime(`${date}T${timeValue}:00`);
+                updateTarget(`${date}T${timeValue}:00`);
               } else if (date) {
-                setTargetDateTime(`${date}T00:00:00`);
+                updateTarget(`${date}T00:00:00`);
               } else {
-                setTargetDateTime(null);
+                updateTarget(null);
               }
             }}
           />
@@ -76,10 +93,10 @@ export default function TargetEventCard() {
             value={timeValue}
             onChange={(time) => {
               if (time && dateValue) {
-                setTargetDateTime(`${dateValue}T${time}:00`);
+                updateTarget(`${dateValue}T${time}:00`);
               } else if (time) {
                 const today = new Date().toISOString().split('T')[0];
-                setTargetDateTime(`${today}T${time}:00`);
+                updateTarget(`${today}T${time}:00`);
               }
             }}
           />

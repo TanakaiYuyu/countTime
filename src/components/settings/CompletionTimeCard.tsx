@@ -10,7 +10,7 @@ import {
   SettingsRadioLabel,
   SettingsSelectFrame,
 } from '@telemetryos/sdk/react';
-import { useCountdownStore } from '../../hooks/useCountdownStore';
+import { useCountdownStoreContext } from '../../hooks/useCountdownStore';
 
 const completionModes: Array<{
   value: 'calculated' | 'provided' | 'preview';
@@ -41,7 +41,7 @@ export default function CompletionTimeCard() {
     setCompletionTimeMode,
     completionTimeValue,
     setCompletionTimeValue,
-  } = useCountdownStore();
+  } = useCountdownStoreContext();
 
   const calculatedLabel = useMemo(() => {
     if (!targetDateTime) return 'Set a target event to calculate';
