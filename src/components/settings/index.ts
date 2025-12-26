@@ -13,10 +13,6 @@ export { default as MessagingCard } from './MessagingCard';
 export { default as CompletionContentCard } from './CompletionContentCard';
 export { default as ThemeBackgroundCard } from './ThemeBackgroundCard';
 
-// Reusable UI components
-export { default as DateTimePicker } from './DateTimePicker';
-export { default as TimezoneSelector } from './TimezoneSelector';
-
 // Custom styled dropdown versions
 export { default as DateTimePickerCustom } from './DateTimePickerCustom';
 export { default as TimezoneSelectorCustom } from './TimezoneSelectorCustom';

@@ -10,7 +10,6 @@ import CompletionContentCard from '../components/settings/CompletionContentCard'
 import ThemeBackgroundCard from '../components/settings/ThemeBackgroundCard';
 import CompletionTimeCard from '../components/settings/CompletionTimeCard';
 import RenderPage from './RenderPage';
-import { useUiScale } from '../hooks/useUiScale';
 
 /**
  * TelemetryOS Countdown Timer Settings Page
@@ -19,10 +18,6 @@ import { useUiScale } from '../hooks/useUiScale';
  * All changes update the render preview in real-time via the TelemetryOS SDK store (useStoreState).
  */
 export default function SettingsPage() {
-  // Use centralized UI scale hook for consistent scaling across the app
-  // This automatically applies responsive scaling to rem-based CSS tokens
-  const { uiScale, uiAspectRatio, uiWidthFactor, uiHeightFactor, viewport } = useUiScale(1920, 1080);
-
   // Get all current settings and setters from the shared TelemetryOS store
   const {
     // Current values
