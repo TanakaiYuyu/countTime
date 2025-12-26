@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { configure } from '@telemetryos/sdk';
-import { CountdownStoreProvider } from './hooks/useCountdownStore';
 import { initializeCountdownStore } from './store/countdownStore';
 import App from './App.tsx';
 import './index.css';
@@ -95,8 +94,6 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <CountdownStoreProvider>
-      <App />
-    </CountdownStoreProvider>
+    <App />
   </StrictMode>
 );

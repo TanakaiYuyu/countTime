@@ -16,28 +16,33 @@ export default function Colon({
   color = '#00ff9c',
   height = 250,
 }: ColonProps) {
-  // Size colon proportionally to display height
-  // Convert pixel height to rem (1rem = 16px)
+  // Responsive sizing based on display height with clamp for fluid scaling
   const heightRem = height / 16;
   const dotSizeRem = heightRem * 0.08;
   const gapRem = heightRem * 0.1;
   const totalHeightRem = dotSizeRem * 2 + gapRem;
+  
+  // Use clamp for responsive dot sizes
+  const dotSize = `clamp(0.5rem, ${dotSizeRem}rem, 1.5rem)`;
+  const gap = `clamp(0.25rem, ${gapRem}rem, 1rem)`;
 
   return (
     <div
-      className="relative inline-flex flex-col justify-center items-center mx-2"
+      className="relative inline-flex flex-col justify-center items-center"
       style={{
-        width: `${dotSizeRem}rem`,
+        width: dotSize,
         height: `${totalHeightRem}rem`,
+        margin: '0 clamp(0.25rem, 1vw, 1rem)',
       }}
     >
       {/* Top dot */}
       <div
         className="rounded-full transition-colors duration-300"
         style={{
-          width: `${dotSizeRem}rem`,
-          height: `${dotSizeRem}rem`,
+          width: dotSize,
+          height: dotSize,
           backgroundColor: color,
+          boxShadow: `0 0 clamp(0.25rem, 0.5vw, 0.5rem) ${color}80`,
         }}
       />
       
@@ -45,10 +50,11 @@ export default function Colon({
       <div
         className="rounded-full transition-colors duration-300"
         style={{
-          width: `${dotSizeRem}rem`,
-          height: `${dotSizeRem}rem`,
+          width: dotSize,
+          height: dotSize,
           backgroundColor: color,
-          marginTop: `${gapRem}rem`,
+          marginTop: gap,
+          boxShadow: `0 0 clamp(0.25rem, 0.5vw, 0.5rem) ${color}80`,
         }}
       />
     </div>

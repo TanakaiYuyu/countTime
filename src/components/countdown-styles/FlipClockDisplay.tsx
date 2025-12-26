@@ -32,10 +32,41 @@ export default function FlipClockDisplay({
   unitLabels = { days: 'DAYS', hours: 'HOURS', minutes: 'MINUTES', seconds: 'SECONDS' },
 }: FlipClockDisplayProps) {
   const [targetTime, setTargetTime] = useState(() => Date.now() + remainingMs);
+  const [blinkColor, setBlinkColor] = useState(color);
   
   useEffect(() => {
     setTargetTime(Date.now() + remainingMs);
   }, [remainingMs]);
+
+  // Blink effect when less than 1 minute remains
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const isLastMinute = totalSeconds > 0 && totalSeconds < 60;
+  
+  useEffect(() => {
+    if (!isLastMinute) {
+      setBlinkColor(color);
+      return;
+    }
+
+    // Alternate between multiple colors for dramatic effect
+    const colors = [
+      color,           // Original color
+      '#FF0000',       // Red
+      '#FF7F00',       // Orange
+      '#FFFF00',       // Yellow
+      '#00FF00',       // Cyan
+      '#0000FF',       // Magenta
+      '#8B00FF',       // Purple
+    ];
+    
+    let colorIndex = 0;
+    const interval = setInterval(() => {
+      colorIndex = (colorIndex + 1) % colors.length;
+      setBlinkColor(colors[colorIndex]);
+    }, 1000); // Change color every 1000ms
+
+    return () => clearInterval(interval);
+  }, [isLastMinute, color]);
 
   const labels = useMemo(() => {
     const labelArray: string[] = [];
@@ -49,43 +80,64 @@ export default function FlipClockDisplay({
     return [labelArray[0], labelArray[1], labelArray[2], labelArray[3]] as [string, string, string, string];
   }, [visibleUnits, unitLabels]);
 
-  // Scale the digit block size based on scaleFactor
-  // Multiplied by 4 to make the flip timer 4x larger
-  const digitBlockWidth = Math.round(40 * 3 * scaleFactor);
-  const digitBlockHeight = Math.round(60 * 3 * scaleFactor);
-  const digitBlockFontSize = Math.round(30 * 3 * scaleFactor);
-  const labelFontSize = Math.round(10 * 3 * scaleFactor);
+  // Responsive sizing based on scaleFactor with clamp for fluid scaling
+  // Base values multiplied by 3 for larger display, then made responsive
+  const baseWidth = 40 * 3;
+  const baseHeight = 60 * 3;
+  const baseFontSize = 30 * 3;
+  const baseLabelSize = 10 * 3;
+  const baseSeparatorSize = 6 * 3;
+
+  // Apply scaleFactor and make responsive with viewport-aware sizing
+  const digitBlockWidth = Math.round(baseWidth * scaleFactor);
+  const digitBlockHeight = Math.round(baseHeight * scaleFactor);
+  const digitBlockFontSize = Math.round(baseFontSize * scaleFactor);
+  const labelFontSize = Math.round(baseLabelSize * scaleFactor);
+  const separatorSize = Math.round(baseSeparatorSize * scaleFactor);
 
   return (
-    <div className="flex items-center justify-center w-full h-full">
-      <FlipClockCountdown
-        to={targetTime}
-        labels={labels}
-        labelStyle={{
-          fontSize: labelFontSize,
-          fontWeight: 500,
-          textTransform: 'uppercase',
-          color: '#FFFFFF',
-        }}
-        digitBlockStyle={{
-          width: digitBlockWidth,
-          height: digitBlockHeight,
-          fontSize: digitBlockFontSize,
-          // Card takes the accent color; digits invert to white for contrast
-          backgroundColor: color || backgroundColor,
-          color: '#FFFFFF',
-          borderRadius: '0.5rem',
-        }}
-        dividerStyle={{
-          color: '#FFFFFF',
-          height: '1px',
-        }}
-        separatorStyle={{
-          color: '#FFFFFF',
-          size: `${Math.round(6 * 3 * scaleFactor)}px`,
-        }}
-        duration={0.5}
-      />
+    <div 
+      className="flex items-center justify-center w-full h-full"
+      style={{
+        padding: 'clamp(0.5rem, 2vw, 2rem)',
+        maxWidth: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ 
+        transform: `scale(${Math.min(1, scaleFactor)})`,
+        transformOrigin: 'center',
+        maxWidth: '100%',
+      }}>
+        <FlipClockCountdown
+          to={targetTime}
+          labels={labels}
+          labelStyle={{
+            fontSize: labelFontSize,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            color: '#FFFFFF',
+          }}
+          digitBlockStyle={{
+            width: digitBlockWidth,
+            height: digitBlockHeight,
+            fontSize: digitBlockFontSize,
+            // Card takes the accent color; digits invert to white for contrast
+            backgroundColor: blinkColor || backgroundColor,
+            color: '#FFFFFF',
+            borderRadius: 'clamp(0.25rem, 0.5vw, 0.75rem)',
+          }}
+          dividerStyle={{
+            color: '#FFFFFF',
+            height: '1px',
+          }}
+          separatorStyle={{
+            color: '#FFFFFF',
+            size: `${separatorSize}px`,
+          }}
+          duration={0.5}
+        />
+      </div>
     </div>
   );
 }

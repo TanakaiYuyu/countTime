@@ -1,45 +1,13 @@
+import { useEffect, useState, useMemo } from 'react';
 import { media } from '@telemetryos/sdk';
-import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
-import { useMemo, useEffect, useState } from 'react';
 import { useCountdownStoreContext } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import CountTimer from '../components/countdown-styles/CountTimer';
+import { useUiScale } from '../hooks/useUiScale';
 
 export default function RenderPage() {
-  const [viewportSize, setViewportSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
-    height: typeof window !== 'undefined' ? window.innerHeight : 1080,
-  });
+  const { uiScale } = useUiScale();
 
-  const uiAspectRatio = useUiAspectRatio();
-
-  const scaleFactor = useMemo(() => {
-    const designHeight = 900;
-    const currentHeight = viewportSize.height;
-    const scale = currentHeight / designHeight;
-    return Math.max(0.85, Math.min(1.8, scale));
-  }, [viewportSize.height]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setViewportSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  useUiScaleToSetRem(scaleFactor);
-  useUiResponsiveFactors(scaleFactor, uiAspectRatio);
-
-  // Get all settings from store - useStoreState automatically subscribes to changes
-  // This ensures real-time updates when settings change in /settings
-  // useStoreState already handles defaults, so we don't need to initialize values
   const {
     targetDateTime,
     timezone,
@@ -62,8 +30,6 @@ export default function RenderPage() {
     secondaryColor,
   } = useCountdownStoreContext();
 
-  // Log settings when render page loads or settings change
-  // useStoreState already handles defaults, so we don't need to initialize
   useEffect(() => {
     console.log('=== RENDER PAGE - LOADED SETTINGS FROM STORE ===');
     const allSettings = {
@@ -89,7 +55,6 @@ export default function RenderPage() {
     };
     console.log('All settings from store (formatted):', JSON.stringify(allSettings, null, 2));
     
-    // Compare with defaults to see if we're getting saved values or defaults
     console.log('=== COMPARING WITH DEFAULTS ===');
     const differences: string[] = [];
     Object.keys(allSettings).forEach((key) => {
@@ -150,19 +115,54 @@ export default function RenderPage() {
     completionDurationMs,
   ]);
 
-  // Calculate duration - completionDurationMs is already calculated in settings
-  const durationMs = useMemo(() => {
-    if (typeof completionDurationMs === 'number') {
-      return Math.max(0, completionDurationMs);
-    }
-    // Fallback: calculate from targetDateTime if completionDurationMs isn't set
+  // Calculate countdown duration from target date/time
+  // Note: completionDurationMs in store is for "how long to show completion content", not countdown duration
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  
+  // Update current time every second to keep countdown accurate
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const countdownDurationMs = useMemo(() => {
+    // Calculate from target date/time
     if (targetDateTime) {
-      const target = new Date(targetDateTime).getTime();
-      // eslint-disable-next-line react-hooks/purity -- Intentional: countdown timer needs current time
-      return Math.max(0, target - Date.now());
+      try {
+        // Parse the target date/time (it's already in ISO format from the picker)
+        const targetDate = new Date(targetDateTime);
+        
+        // The targetDateTime from the picker is already in the selected timezone
+        // We just need to calculate the difference from now
+        const target = targetDate.getTime();
+        const remaining = Math.max(0, target - currentTime);
+        
+        console.log('Countdown calculation:', {
+          targetDateTime,
+          timezone,
+          targetDate: targetDate.toISOString(),
+          targetLocal: targetDate.toLocaleString(),
+          currentTime: new Date(currentTime).toISOString(),
+          currentLocal: new Date(currentTime).toLocaleString(),
+          remaining,
+          remainingDays: Math.floor(remaining / (1000 * 60 * 60 * 24)),
+          remainingHours: Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          remainingMinutes: Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60)),
+          remainingSeconds: Math.floor((remaining % (1000 * 60)) / 1000)
+        });
+        
+        return remaining;
+      } catch (error) {
+        console.error('Error calculating target date:', error);
+        return 0;
+      }
     }
-    return defaultStore.completionDurationMs;
-  }, [completionDurationMs, targetDateTime]);
+    
+    // No target date set - show 00:00:00
+    return 0;
+  }, [targetDateTime, timezone, currentTime]);
 
   const [backgroundMedia, setBackgroundMedia] = useState<{
     url: string;
@@ -229,48 +229,47 @@ export default function RenderPage() {
   const getBackgroundStyle = () => {
     const bgType = backgroundType || defaultStore.backgroundType;
     const bgColor = backgroundColor || defaultStore.backgroundColor;
-    const bgOpacity = backgroundOpacity !== undefined ? backgroundOpacity : defaultStore.backgroundOpacity;
 
     if (bgType === 'solid') {
       return {
         backgroundColor: bgColor,
-        opacity: bgOpacity,
+        opacity: 1, // Opacity is handled by the background color itself or the media overlay
       };
     }
     if (bgType === 'media' && backgroundMedia) {
       return {
-        backgroundColor: 'transparent',
+        backgroundColor: bgColor || 'hsl(210, 28%, 8%)', // Fallback color behind media
+        opacity: 1,
       };
     }
+    // Default background
     return {
-      backgroundColor: 'hsl(210, 28%, 8%)',
-      opacity: bgOpacity,
+      backgroundColor: bgColor || 'hsl(210, 28%, 8%)',
+      opacity: 1,
     };
   };
 
   const ledColor = primaryColor || defaultStore.primaryColor;
-  const displayBackgroundColor = getBackgroundStyle().backgroundColor || '#000000';
+  const textColor = secondaryColor || defaultStore.secondaryColor;
+  const displayBackgroundColor = backgroundColor || defaultStore.backgroundColor;
 
-  // Track if countdown has completed
   const [hasCompleted, setHasCompleted] = useState(false);
 
-  // Handle countdown completion
   const handleComplete = () => {
     setHasCompleted(true);
   };
 
-  // Render completion content if timer has completed and completionType is not 'none'
   const renderCompletionContent = () => {
     if (!hasCompleted) return null;
     
     const compType = completionType || defaultStore.completionType;
     
     if (compType === 'none') {
-      return null; // Keep showing countdown at 00:00:00
+      return null;
     }
     
     if (compType === 'richText') {
-      const message = completionRichText || defaultStore.completionRichText;
+      const message = completionRichText || defaultStore.completionRichText || '🎉 Completed!';
       return (
         <div
           style={{
@@ -280,12 +279,16 @@ export default function RenderPage() {
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
             color: ledColor,
-            fontSize: `${2 * scaleFactor}rem`,
+            fontSize: `clamp(1.5rem, ${2 * uiScale}rem, 3rem)`,
             fontWeight: 'bold',
             zIndex: 10,
-            padding: '2rem',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            borderRadius: '0.5rem',
+            padding: 'clamp(1.5rem, 3vw, 3rem)',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            borderRadius: 'clamp(0.5rem, 1vw, 1rem)',
+            backdropFilter: 'blur(8px)',
+            maxWidth: '90%',
+            boxShadow: '0 0.5rem 2rem rgba(0, 0, 0, 0.5)',
+            border: `2px solid ${ledColor}40`,
           }}
         >
           {message}
@@ -301,7 +304,14 @@ export default function RenderPage() {
             loop
             muted
             playsInline
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 10 }}
+            style={{ 
+              position: 'absolute', 
+              inset: 0, 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover', 
+              zIndex: 10,
+            }}
             src={completionMedia.url}
           />
         );
@@ -311,7 +321,14 @@ export default function RenderPage() {
           <img
             src={completionMedia.url}
             alt="Completion media"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 10 }}
+            style={{ 
+              position: 'absolute', 
+              inset: 0, 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover', 
+              zIndex: 10,
+            }}
           />
         );
       }
@@ -320,15 +337,13 @@ export default function RenderPage() {
     return null;
   };
 
-  // Ensure only one display style is used
   const currentDisplayStyle = displayStyle || defaultStore.displayStyle;
   
-  console.log('RenderPage - Current displayStyle from store:', displayStyle);
-  console.log('RenderPage - Using displayStyle:', currentDisplayStyle);
-  console.log('RenderPage - About to render ONE CountTimer component');
-
   const renderBackgroundMedia = () => {
     if (backgroundType !== 'media' || !backgroundMedia) return null;
+    
+    const mediaOpacity = backgroundOpacity !== undefined ? backgroundOpacity : defaultStore.backgroundOpacity;
+    
     if (backgroundMedia.type === 'video') {
       return (
         <video
@@ -337,7 +352,15 @@ export default function RenderPage() {
           muted
           playsInline
           src={backgroundMedia.url}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: backgroundOpacity }}
+          style={{ 
+            position: 'absolute', 
+            inset: 0, 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover', 
+            opacity: mediaOpacity,
+            zIndex: 0,
+          }}
         />
       );
     }
@@ -345,43 +368,158 @@ export default function RenderPage() {
       <img
         src={backgroundMedia.url}
         alt="Background"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: backgroundOpacity }}
+        style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover', 
+          opacity: mediaOpacity,
+          zIndex: 0,
+        }}
       />
     );
   };
 
-  const completionTimeLabel =
-    completionTimeMode === 'calculated'
-      ? targetDateTime || defaultStore.targetDateTime
-      : completionTimeValue || defaultStore.completionTimeValue || '';
+  // Format completion time display
+  const getCompletionTimeDisplay = () => {
+    const mode = completionTimeMode || defaultStore.completionTimeMode;
+    
+    if (mode === 'preview') {
+      return null; // Don't show in preview mode
+    }
+    
+    if (mode === 'calculated' && targetDateTime) {
+      try {
+        const date = new Date(targetDateTime);
+        const timeString = date.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        });
+        const dateString = date.toLocaleDateString([], { 
+          month: 'short', 
+          day: 'numeric',
+          year: 'numeric'
+        });
+        return `${dateString} at ${timeString}`;
+      } catch {
+        return null;
+      }
+    }
+    
+    if (mode === 'provided' && completionTimeValue) {
+      return completionTimeValue;
+    }
+    
+    return null;
+  };
+
+  const completionTimeDisplay = getCompletionTimeDisplay();
 
   return (
-    <div className="render-page-container" style={{ position: 'relative', overflow: 'hidden', ...getBackgroundStyle() }}>
+    <div 
+      className="render-page-container" 
+      style={{ 
+        position: 'relative', 
+        overflow: 'hidden', 
+        ...getBackgroundStyle(),
+      }}
+    >
       {renderBackgroundMedia()}
-      <div className="render-page-content" style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-          <div style={{ width: '100%', maxWidth: '1200px' }}>
-            <div style={{ marginBottom: '1.25rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1.6 * scaleFactor}rem`, textAlign: 'center' }}>
+      <div 
+        className="render-page-content" 
+        style={{ 
+          position: 'relative', 
+          width: '100%', 
+          height: '100%',
+          zIndex: 1,
+        }}
+      >
+        <div 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: 'clamp(1rem, 3vw, 3rem)',
+          }}
+        >
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '1400px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 'clamp(1rem, 2vw, 2rem)',
+            }}
+          >
+            {/* Title */}
+            {titleRichText && (
+              <div 
+                style={{ 
+                  color: textColor,
+                  fontSize: `clamp(1.25rem, ${1.6 * uiScale}rem, 2.5rem)`,
+                  textAlign: 'center',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  lineHeight: 1.2,
+                  maxWidth: '100%',
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                }}
+              >
               {titleRichText}
             </div>
-            <CountTimer
-              key={`countdown-${currentDisplayStyle}`}
-              durationMs={durationMs}
-              color={ledColor}
-              backgroundColor={displayBackgroundColor}
-              height={160 * scaleFactor}
-              scaleFactor={scaleFactor}
-              displayStyle={currentDisplayStyle}
-              visibleUnits={visibleUnits}
-              unitLabels={unitLabels}
-              onComplete={handleComplete}
-            />
-            <div style={{ marginTop: '1rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1.2 * scaleFactor}rem`, textAlign: 'center' }}>
-              {ctaRichText}
+            )}
+
+            {/* Countdown Timer */}
+            <div style={{ width: '100%', maxWidth: '1200px' }}>
+              <CountTimer
+                key={`countdown-${currentDisplayStyle}-${targetDateTime}`}
+                durationMs={countdownDurationMs}
+                color={ledColor}
+                backgroundColor={displayBackgroundColor}
+                height={160 * uiScale}
+                scaleFactor={uiScale}
+                displayStyle={currentDisplayStyle}
+                visibleUnits={visibleUnits}
+                unitLabels={unitLabels}
+                onComplete={handleComplete}
+              />
             </div>
-            <div style={{ marginTop: '0.75rem', color: secondaryColor || defaultStore.secondaryColor, fontSize: `${1 * scaleFactor}rem`, textAlign: 'center' }}>
-              {completionTimeLabel ? `Completion Time: ${completionTimeLabel}` : null}
+
+            {/* Call to Action */}
+            {ctaRichText && (
+              <div 
+                style={{ 
+                  color: textColor,
+                  fontSize: `clamp(1rem, ${1.2 * uiScale}rem, 1.75rem)`,
+                  textAlign: 'center',
+                  lineHeight: 1.4,
+                  maxWidth: '100%',
+                  textShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                {ctaRichText}
+              </div>
+            )}
+
+            {/* Completion Time */}
+            {completionTimeDisplay && (
+              <div 
+                style={{ 
+                  color: textColor,
+                  fontSize: `clamp(0.875rem, ${1 * uiScale}rem, 1.25rem)`,
+                  textAlign: 'center',
+                  opacity: 0.9,
+                  fontWeight: 'var(--font-weight-medium)',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                Completes: {completionTimeDisplay}
             </div>
+            )}
           </div>
         </div>
 

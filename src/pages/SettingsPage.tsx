@@ -1,5 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
-import { useUiAspectRatio, useUiResponsiveFactors, useUiScaleToSetRem } from '@telemetryos/sdk/react';
+import { useState, useEffect } from 'react';
 import { useCountdownStoreContext } from '../hooks/useCountdownStore';
 import { defaultStore } from '../store/countdownStore';
 import SettingsHeader from '../components/settings/SettingsHeader';
@@ -11,6 +10,7 @@ import CompletionContentCard from '../components/settings/CompletionContentCard'
 import ThemeBackgroundCard from '../components/settings/ThemeBackgroundCard';
 import CompletionTimeCard from '../components/settings/CompletionTimeCard';
 import RenderPage from './RenderPage';
+import { useUiScale } from '../hooks/useUiScale';
 
 /**
  * TelemetryOS Countdown Timer Settings Page
@@ -19,60 +19,9 @@ import RenderPage from './RenderPage';
  * All changes update the render preview in real-time via the TelemetryOS SDK store (useStoreState).
  */
 export default function SettingsPage() {
-  // Track viewport dimensions for responsive scaling
-  // Use actual screen/window dimensions (not limited to 1920x1080)
-  const [viewportSize, setViewportSize] = useState({
-    width: typeof window !== 'undefined' 
-      ? (window.innerWidth || window.screen.width || 1920)
-      : 1920,
-    height: typeof window !== 'undefined' 
-      ? (window.innerHeight || window.screen.height || 1080)
-      : 1080,
-  });
-
-  const uiAspectRatio = useUiAspectRatio();
-
-  // Calculate scale factor using TelemetryOS UI scale hooks
-  const scaleFactor = useMemo(() => {
-    const designHeight = 900;
-    const currentHeight = viewportSize.height;
-    const scale = currentHeight / designHeight;
-    return Math.max(0.85, Math.min(1.8, scale));
-  }, [viewportSize.height]);
-
-  // Update viewport size on resize
-  // Support high-resolution displays and orientation changes
-  useEffect(() => {
-    const handleResize = () => {
-      setViewportSize({
-        width: window.innerWidth || window.screen.width,
-        height: window.innerHeight || window.screen.height,
-      });
-    };
-
-    // Also handle orientation changes for high-res displays
-    const handleOrientationChange = () => {
-      setTimeout(handleResize, 100); // Small delay to ensure dimensions are updated
-    };
-
-    // Set initial size
-    handleResize();
-
-    // Listen for resize and orientation events
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleOrientationChange);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleOrientationChange);
-    };
-  }, []);
-
-  // CRITICAL: Call useUiScaleToSetRem() to set REM base for responsive scaling
-  // This ensures all rem-based CSS scales properly for different screen sizes
-  useUiScaleToSetRem(scaleFactor);
-  useUiResponsiveFactors(scaleFactor, uiAspectRatio);
+  // Use centralized UI scale hook for consistent scaling across the app
+  // This automatically applies responsive scaling to rem-based CSS tokens
+  const { uiScale, uiAspectRatio, uiWidthFactor, uiHeightFactor, viewport } = useUiScale(1920, 1080);
 
   // Get all current settings and setters from the shared TelemetryOS store
   const {
@@ -435,10 +384,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="tos-base min-h-screen flex flex-col lg:flex-row">
+    <div className="tos-base settings-page-container">
       {/* Settings Section */}
-      <div className="flex-1 overflow-y-auto min-w-0" style={{ padding: '5%' }}>
-        <div className="max-w-7xl showcase mx-auto" style={{ padding: 'var(--space-6)' }}>
+      <div className="settings-page-content">
+        <div className="settings-page-inner">
           <SettingsHeader onSave={handleSave} onPreview={handlePreview} isSaving={isSaving} />
           
           {/* Save success message */}
@@ -478,31 +427,21 @@ export default function SettingsPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.65)', padding: '2rem' }}
+          className="preview-modal"
         >
-          <div
-            className="w-full max-w-6xl bg-[#0b0d17] rounded-lg shadow-2xl overflow-hidden relative"
-            style={{ maxHeight: '90vh' }}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <div style={{ color: '#fff', fontWeight: 600 }}>Preview (/render)</div>
+          <div className="preview-modal__content">
+            <div className="preview-modal__header">
+              <div className="preview-modal__title">Preview</div>
               <button
                 type="button"
                 onClick={() => setIsPreviewOpen(false)}
-                style={{
-                  color: '#fff',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: '6px',
-                  padding: '0.4rem 0.75rem',
-                  cursor: 'pointer',
-                }}
+                className="preview-modal__close"
+                aria-label="Close preview"
               >
-                Close
+                ✕
               </button>
             </div>
-            <div style={{ height: '80vh', overflow: 'hidden', background: '#000' }}>
+            <div className="preview-modal__body">
               <RenderPage />
             </div>
           </div>

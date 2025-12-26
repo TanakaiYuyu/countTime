@@ -1,55 +1,78 @@
-import { Save, Eye, Loader2 } from 'lucide-react';
+/**
+ * Settings Header Component
+ * 
+ * Top-level header for the settings page with save and preview actions.
+ * Follows TelemetryOS design system with responsive scaling.
+ */
 
 interface SettingsHeaderProps {
-  onSave?: () => void;
-  onPreview?: () => void;
-  isSaving?: boolean;
+  onSave: () => void;
+  onPreview: () => void;
+  isSaving: boolean;
 }
 
-export default function SettingsHeader({ onSave, onPreview, isSaving = false }: SettingsHeaderProps) {
+export default function SettingsHeader({ onSave, onPreview, isSaving }: SettingsHeaderProps) {
   return (
-    <div className="flex flex-row gap-2 md:gap-0 items-center justify-between mb-8">
-      <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text)' }}>
-        Timer Settings
-      </h1>
-      <div className="flex gap-3">
-        <button 
-          className="btn btn--secondary" 
+    <header 
+      className="settings-header"
+      style={{ 
+        marginBottom: 'var(--space-6)',
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h1 
+          style={{
+            fontSize: 'clamp(1.25rem, 1.875rem, 2.5rem)',
+            fontWeight: 'var(--font-weight-bold)',
+            color: 'var(--color-text)',
+            margin: 0,
+            marginBottom: 'var(--space-2)',
+            lineHeight: 'var(--line-height-tight)',
+          }}
+        >
+          Countdown Timer Settings
+        </h1>
+        <p 
+          style={{
+            fontSize: 'clamp(0.8125rem, 0.90625rem, 1rem)',
+            color: 'var(--color-text-muted)',
+            margin: 0,
+            lineHeight: 'var(--line-height-base)',
+          }}
+        >
+          Configure your countdown display, messaging, and appearance
+        </p>
+      </div>
+      <div className="settings-header__actions">
+        <button
           type="button"
           onClick={onPreview}
-          disabled={isSaving}
-          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+          className="btn btn--secondary settings-header__btn"
+          style={{
+            fontSize: 'clamp(0.8125rem, 0.90625rem, 1rem)',
+            padding: 'var(--space-3) var(--space-4)',
+            whiteSpace: 'nowrap',
+          }}
         >
-          <Eye size={16} />
-          <span className='text-sm hidden md:block'>Preview</span>
+          Preview
         </button>
-        <button 
-          className="btn cursor-pointer flex items-center gap-2" 
+        <button
           type="button"
           onClick={onSave}
           disabled={isSaving}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 'var(--space-2)',
-            opacity: isSaving ? 0.7 : 1,
-            cursor: isSaving ? 'not-allowed' : 'pointer'
+          className="btn settings-header__btn"
+          style={{
+            fontSize: 'clamp(0.8125rem, 0.90625rem, 1rem)',
+            padding: 'var(--space-3) var(--space-4)',
+            background: 'var(--color-accent)',
+            color: '#000',
+            whiteSpace: 'nowrap',
           }}
         >
-          {isSaving ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              <span className='text-sm hidden md:block'>Saving...</span>
-            </>
-          ) : (
-            <>
-              <Save size={16} />
-              <span className='text-sm hidden md:block'>Save Changes</span>
-            </>
-          )}
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
-    </div>
+    </header>
   );
 }
 

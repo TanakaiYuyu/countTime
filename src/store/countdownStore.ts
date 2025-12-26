@@ -62,7 +62,7 @@ export const defaultStore: CountdownStore = {
   targetDateTime: null,
   timezone: 'device',
   completionDurationMs: 0,
-  displayStyle: 'digital',
+  displayStyle: 'flip',
   visibleUnits: {
     days: true,
     hours: true,
